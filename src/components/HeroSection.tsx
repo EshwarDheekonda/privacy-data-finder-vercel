@@ -1,16 +1,41 @@
 import { useState } from 'react';
-import { Search, Shield, Zap, Eye } from 'lucide-react';
+import { Search, Shield, Zap, Eye, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/hooks/use-toast';
+import { searchApi, handleApiError, type SearchResponse } from '@/lib/api';
 import heroImage from '@/assets/hero-privacy.jpg';
 
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      console.log('Starting privacy assessment for:', searchQuery);
-      // TODO: Integrate with backend API
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsLoading(true);
+    
+    try {
+      toast({
+        title: 'Starting Assessment',
+        description: `Scanning privacy risks for "${searchQuery}"...`,
+      });
+
+      const response: SearchResponse = await searchApi.searchByName(searchQuery);
+      
+      // Success toast
+      toast({
+        title: 'Assessment Complete',
+        description: `Found ${response.total_results} potential privacy risks in ${response.scan_time}s`,
+      });
+
+      // TODO: Navigate to results page or show results
+      console.log('Search results:', response);
+      
+    } catch (error: any) {
+      handleApiError(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,10 +96,14 @@ export const HeroSection = () => {
               <Button 
                 onClick={handleSearch}
                 className="bg-gradient-primary hover:scale-105 transition-all duration-300 h-14 px-8 text-lg font-semibold"
-                disabled={!searchQuery.trim()}
+                disabled={!searchQuery.trim() || isLoading}
               >
-                <Zap className="w-5 h-5 mr-2" />
-                Start Assessment
+                {isLoading ? (
+                  <Loader className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="w-5 h-5 mr-2" />
+                )}
+                {isLoading ? 'Scanning...' : 'Start Assessment'}
               </Button>
             </div>
           </div>
