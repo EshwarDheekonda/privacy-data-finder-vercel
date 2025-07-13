@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
 import { searchApi, handleApiError, type SearchResponse } from '@/lib/api';
+import { useCounter } from '@/contexts/CounterContext';
+import { AnimatedCounter } from '@/components/AnimatedCounter';
 import heroImage from '@/assets/hero-privacy.jpg';
 
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { count, incrementCounter } = useCounter();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -22,6 +25,9 @@ export const HeroSection = () => {
       });
 
       const response: SearchResponse = await searchApi.searchByName(searchQuery);
+      
+      // Increment counter on successful assessment
+      incrementCounter();
       
       // Success toast
       toast({
@@ -121,7 +127,10 @@ export const HeroSection = () => {
             </div>
             <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground">127,438</span>
+              <AnimatedCounter 
+                value={count} 
+                className="font-semibold text-foreground gradient-text" 
+              />
               <span>assessments completed</span>
             </div>
           </div>

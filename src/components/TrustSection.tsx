@@ -1,6 +1,10 @@
 import { Shield, Lock, Award, CheckCircle, Users, Globe } from 'lucide-react';
+import { useCounter } from '@/contexts/CounterContext';
+import { AnimatedCounter } from '@/components/AnimatedCounter';
 
 export const TrustSection = () => {
+  const { count } = useCounter();
+  
   const trustSignals = [
     {
       icon: Shield,
@@ -82,7 +86,7 @@ export const TrustSection = () => {
               <span className="text-muted-foreground text-sm font-medium">LIVE COUNTER</span>
             </div>
             <div className="text-4xl font-bold gradient-text mb-2">
-              127,438
+              <AnimatedCounter value={count} />
             </div>
             <p className="text-muted-foreground">
               Privacy assessments completed this month
