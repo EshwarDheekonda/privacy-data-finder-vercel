@@ -30,8 +30,8 @@ export const ResultsFilters = ({ results, onFilterChange }: ResultsFiltersProps)
   });
 
   // Extract unique values from results
-  const uniquePlatforms = [...new Set(results.map(r => r.source))];
-  const uniqueDomains = [...new Set(results.map(r => {
+  const uniquePlatforms = [...new Set((results || []).map(r => r.source))];
+  const uniqueDomains = [...new Set((results || []).map(r => {
     try {
       return new URL(r.source).hostname;
     } catch {
