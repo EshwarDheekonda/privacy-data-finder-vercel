@@ -11,18 +11,27 @@ import heroImage from '@/assets/hero-privacy.jpg';
 export const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const { count, incrementCounter } = useCounter();
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
     setIsLoading(true);
+    setLoadingMessage('Initializing privacy scan...');
     
     try {
       toast({
         title: 'Starting Assessment',
         description: `Scanning privacy risks for "${searchQuery}"...`,
       });
+
+      // Update loading messages to keep user informed
+      setTimeout(() => setLoadingMessage('Searching public databases...'), 5000);
+      setTimeout(() => setLoadingMessage('Analyzing social media presence...'), 15000);
+      setTimeout(() => setLoadingMessage('Checking data broker sites...'), 30000);
+      setTimeout(() => setLoadingMessage('Compiling risk assessment...'), 60000);
+      setTimeout(() => setLoadingMessage('Finalizing results...'), 120000);
 
       const response: SearchResponse = await searchApi.searchByName(searchQuery);
       
@@ -42,6 +51,7 @@ export const HeroSection = () => {
       handleApiError(error);
     } finally {
       setIsLoading(false);
+      setLoadingMessage('');
     }
   };
 
@@ -99,7 +109,7 @@ export const HeroSection = () => {
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
-              <Button 
+               <Button 
                 onClick={handleSearch}
                 className="bg-gradient-primary hover:scale-105 transition-all duration-300 h-14 px-8 text-lg font-semibold"
                 disabled={!searchQuery.trim() || isLoading}
@@ -113,6 +123,19 @@ export const HeroSection = () => {
               </Button>
             </div>
           </div>
+
+          {/* Loading Status */}
+          {isLoading && loadingMessage && (
+            <div className="mt-4 p-4 glass-card max-w-md mx-auto">
+              <div className="flex items-center justify-center gap-3">
+                <Loader className="w-4 h-4 animate-spin text-secondary" />
+                <span className="text-muted-foreground text-sm">{loadingMessage}</span>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground text-center">
+                This may take up to 3 minutes for comprehensive scanning
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats */}
           <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">

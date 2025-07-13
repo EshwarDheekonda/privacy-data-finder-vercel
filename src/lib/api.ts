@@ -44,9 +44,9 @@ export class SearchApiError extends Error {
 // API Functions
 export const searchApi = {
   /**
-   * Search for privacy risks associated with a name
+   * Search for privacy risks associated with a name with retry logic
    */
-  async searchByName(searchName: string): Promise<SearchResponse> {
+  async searchByName(searchName: string, retryCount = 0): Promise<SearchResponse> {
     if (!searchName.trim()) {
       throw new SearchApiError('Search name cannot be empty');
     }
@@ -60,8 +60,8 @@ export const searchApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Add timeout
-        signal: AbortSignal.timeout(30000), // 30 second timeout
+        // Add timeout - increased for longer processing
+        signal: AbortSignal.timeout(180000), // 3 minute timeout
       });
 
       if (!response.ok) {
@@ -80,18 +80,28 @@ export const searchApi = {
         throw error;
       }
 
-      // Handle network errors
+      // Handle network errors with retry logic
       if (error instanceof TypeError && error.message.includes('fetch')) {
+        if (retryCount < 2) {
+          // Retry up to 2 times for network errors
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Progressive delay
+          return searchApi.searchByName(searchName, retryCount + 1);
+        }
         throw new SearchApiError(
           'Unable to connect to the privacy assessment service. Please check your internet connection and try again.',
           'NETWORK_ERROR'
         );
       }
 
-      // Handle timeout errors
+      // Handle timeout errors with retry logic
       if (error instanceof DOMException && error.name === 'TimeoutError') {
+        if (retryCount < 1) {
+          // Retry once for timeout errors
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return searchApi.searchByName(searchName, retryCount + 1);
+        }
         throw new SearchApiError(
-          'The search request timed out. Please try again.',
+          'The search is taking longer than expected. The system is processing your request, please try again in a moment.',
           'TIMEOUT_ERROR'
         );
       }
