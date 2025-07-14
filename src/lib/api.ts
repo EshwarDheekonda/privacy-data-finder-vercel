@@ -3,30 +3,30 @@ import { toast } from '@/hooks/use-toast';
 // API Configuration
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
-// Raw API Response Interfaces (matching backend structure)
-export interface RawApiResult {
-  platform: string;
+// Raw API Response Interfaces (matching actual backend structure)
+export interface RawWebpageResult {
+  description: string;
+  domain: string;
+  relevance_score: number;
+  title: string;
   url: string;
-  title?: string;
-  snippet?: string;
-  data_found: string[];
-  risk_assessment: {
-    level: 'low' | 'medium' | 'high' | 'critical';
-    confidence: number;
-    reasoning: string;
-  };
-  metadata: {
-    found_at: string;
-    last_updated?: string;
-  };
+}
+
+export interface RawSocialMediaResults {
+  facebook: any[];
+  instagram: any[];
+  linkedin: any[];
+  tiktok: any[];
+  twitter: any[];
+  youtube: any[];
 }
 
 export interface RawApiResponse {
   query: string;
   total_results: number;
-  results: RawApiResult[];
-  scan_time: number;
-  timestamp: string;
+  total_social_results: number;
+  webpages: RawWebpageResult[];
+  social_media: RawSocialMediaResults;
 }
 
 // Frontend Interfaces (transformed for UI)
@@ -59,28 +59,68 @@ export interface ApiError {
 
 // Data Transformation Functions
 export const transformApiResponse = (rawResponse: RawApiResponse): SearchResponse => {
+  const allResults: SearchResult[] = [];
+  
+  // Transform webpages
+  rawResponse.webpages.forEach((webpage, index) => {
+    allResults.push(transformWebpageResult(webpage, index));
+  });
+  
+  // Transform social media results
+  Object.entries(rawResponse.social_media).forEach(([platform, results]) => {
+    results.forEach((result: any, index: number) => {
+      allResults.push(transformSocialMediaResult(result, platform, index));
+    });
+  });
+
   return {
     query: rawResponse.query,
     total_results: rawResponse.total_results,
-    scan_time: rawResponse.scan_time,
-    timestamp: rawResponse.timestamp,
-    results: rawResponse.results.map(transformApiResult),
+    scan_time: 0, // Not provided by API
+    timestamp: new Date().toISOString(),
+    results: allResults,
   };
 };
 
-export const transformApiResult = (rawResult: RawApiResult, index: number): SearchResult => {
+export const transformWebpageResult = (webpage: RawWebpageResult, index: number): SearchResult => {
+  // Generate risk assessment based on relevance score and domain
+  const riskLevel = getRiskLevelFromScore(webpage.relevance_score);
+  const confidence = Math.max(0.3, webpage.relevance_score); // Ensure minimum confidence
+  
   return {
-    id: `${rawResult.platform}-${index}-${Date.now()}`,
-    name: rawResult.title || `${rawResult.platform} Result`,
-    source: rawResult.url || rawResult.platform,
-    risk_level: rawResult.risk_assessment.level,
-    data_types: rawResult.data_found || [],
-    found_at: rawResult.metadata.found_at,
-    confidence: rawResult.risk_assessment.confidence,
-    title: rawResult.title,
-    snippet: rawResult.snippet,
-    reasoning: rawResult.risk_assessment.reasoning,
+    id: `webpage-${index}-${Date.now()}`,
+    name: webpage.title,
+    source: webpage.url,
+    risk_level: riskLevel,
+    data_types: ['Personal Information', 'Public Profile'],
+    found_at: new Date().toISOString(),
+    confidence: confidence,
+    title: webpage.title,
+    snippet: webpage.description,
+    reasoning: `Found on ${webpage.domain} with relevance score ${webpage.relevance_score}`,
   };
+};
+
+export const transformSocialMediaResult = (result: any, platform: string, index: number): SearchResult => {
+  return {
+    id: `social-${platform}-${index}-${Date.now()}`,
+    name: result.title || `${platform} Profile`,
+    source: result.url || platform,
+    risk_level: 'medium' as const,
+    data_types: ['Social Media Profile', 'Personal Information'],
+    found_at: new Date().toISOString(),
+    confidence: 0.7,
+    title: result.title,
+    snippet: result.description,
+    reasoning: `Found on ${platform} social media platform`,
+  };
+};
+
+export const getRiskLevelFromScore = (score: number): 'low' | 'medium' | 'high' | 'critical' => {
+  if (score >= 0.8) return 'critical';
+  if (score >= 0.6) return 'high';
+  if (score >= 0.3) return 'medium';
+  return 'low';
 };
 
 // Custom Error Class
