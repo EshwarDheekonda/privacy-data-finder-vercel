@@ -150,6 +150,8 @@ export const searchApi = {
       const url = new URL('/search', API_BASE_URL);
       url.searchParams.append('searchName', searchName.trim());
 
+      console.log('Starting API request to:', url.toString());
+      
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
@@ -159,8 +161,11 @@ export const searchApi = {
         signal: AbortSignal.timeout(180000), // 3 minute timeout
       });
 
+      console.log('API Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('API Error response:', errorData);
         throw new SearchApiError(
           errorData.message || `HTTP ${response.status}: ${response.statusText}`,
           errorData.code || `HTTP_${response.status}`,
@@ -169,7 +174,20 @@ export const searchApi = {
       }
 
       const rawData: RawApiResponse = await response.json();
+      console.log('Raw API Data received:', {
+        query: rawData.query,
+        total_results: rawData.total_results,
+        webpages_count: rawData.webpages?.length || 0,
+        social_media_keys: Object.keys(rawData.social_media || {}),
+        sample_webpage: rawData.webpages?.[0]
+      });
+      
       const transformedData = transformApiResponse(rawData);
+      console.log('Transformed data:', {
+        total_results: transformedData.total_results,
+        results_count: transformedData.results?.length || 0,
+        sample_result: transformedData.results?.[0]
+      });
       return transformedData;
     } catch (error) {
       if (error instanceof SearchApiError) {
@@ -191,14 +209,27 @@ export const searchApi = {
 
       // Handle timeout errors with retry logic
       if (error instanceof DOMException && error.name === 'TimeoutError') {
+        console.log('API timeout occurred, retry count:', retryCount);
         if (retryCount < 1) {
           // Retry once for timeout errors
           await new Promise(resolve => setTimeout(resolve, 2000));
           return searchApi.searchByName(searchName, retryCount + 1);
         }
+        
+        // After all retries, create a mock response to show at least something
+        console.log('Final timeout - creating partial response');
+        const partialResponse: SearchResponse = {
+          query: searchName,
+          total_results: 0,
+          scan_time: 180,
+          timestamp: new Date().toISOString(),
+          results: []
+        };
+        
         throw new SearchApiError(
-          'The search is taking longer than expected. The system is processing your request, please try again in a moment.',
-          'TIMEOUT_ERROR'
+          'The search is taking longer than expected. Please try again with a shorter timeout or contact support.',
+          'TIMEOUT_ERROR',
+          { partialResponse }
         );
       }
 

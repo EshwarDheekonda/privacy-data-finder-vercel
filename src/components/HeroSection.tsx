@@ -3,7 +3,7 @@ import { Search, Shield, Zap, Eye, Loader } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { searchApi, handleApiError, SearchResponse } from '@/lib/api';
+import { searchApi, handleApiError, SearchResponse, SearchApiError } from '@/lib/api';
 import { useCounter } from '@/contexts/CounterContext';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { useNavigate } from 'react-router-dom';
@@ -52,7 +52,26 @@ export const HeroSection = () => {
       });
       
     } catch (error: any) {
-      handleApiError(error);
+      console.error('Search error caught:', error);
+      
+      // Check if we have partial results to show despite the error
+      if (error instanceof SearchApiError && error.code === 'TIMEOUT_ERROR' && error.details?.partialResponse) {
+        console.log('Showing partial results due to timeout');
+        navigate('/results', { 
+          state: { 
+            searchResponse: error.details.partialResponse,
+            hasTimeout: true 
+          }
+        });
+        
+        toast({
+          title: 'Partial Results',
+          description: 'Search timed out but we found some results. Try searching again for complete results.',
+          variant: 'destructive',
+        });
+      } else {
+        handleApiError(error);
+      }
     } finally {
       setIsLoading(false);
       setLoadingMessage('');

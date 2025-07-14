@@ -15,6 +15,14 @@ const Results = () => {
   useEffect(() => {
     // Get search response from navigation state
     const response = location.state?.searchResponse as SearchResponse;
+    const hasTimeout = location.state?.hasTimeout as boolean;
+    
+    console.log('Results page received state:', {
+      hasResponse: !!response,
+      hasTimeout,
+      totalResults: response?.total_results,
+      resultsCount: response?.results?.length
+    });
     
     if (!response) {
       // If no search response, redirect to home
@@ -28,6 +36,15 @@ const Results = () => {
     }
 
     setSearchResponse(response);
+    
+    // Show timeout warning if needed
+    if (hasTimeout) {
+      toast({
+        title: 'Search Timed Out',
+        description: 'The search took too long to complete. Some results may be missing.',
+        variant: 'destructive',
+      });
+    }
   }, [location.state, navigate]);
 
   const handleNewSearch = () => {

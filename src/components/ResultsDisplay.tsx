@@ -20,6 +20,15 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
     domains: [],
   });
 
+  // Debug logging
+  console.log('ResultsDisplay received:', {
+    searchResponse,
+    totalResults: searchResponse?.total_results,
+    resultsArray: searchResponse?.results,
+    resultsCount: searchResponse?.results?.length,
+    firstResult: searchResponse?.results?.[0]
+  });
+
   // Categorize results
   const categorizedResults = useMemo(() => {
     const socialMediaPlatforms = ['facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'youtube'];
