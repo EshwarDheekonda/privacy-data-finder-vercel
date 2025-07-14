@@ -44,19 +44,35 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
 
     searchResponse.results.forEach((result, index) => {
       try {
-        // Use result ID to determine if it's social media (more reliable than URL parsing)
+        // Enhanced categorization logic - check multiple indicators
         const isSocialMedia = result.id.startsWith('social-') || 
+                              result.id.startsWith('social-webpage-') ||
                               result.data_types.some(type => 
-                                ['Social Media', 'Facebook Profile', 'Twitter Profile', 'LinkedIn Profile', 
-                                 'Instagram Profile', 'TikTok Profile', 'YouTube Profile'].includes(type)
-                              );
+                                type.includes('Profile') && (
+                                  type.includes('Social Media') || type.includes('LinkedIn') || 
+                                  type.includes('Facebook') || type.includes('Twitter') || 
+                                  type.includes('Instagram') || type.includes('TikTok') || 
+                                  type.includes('YouTube') || type.includes('Snapchat') ||
+                                  type.includes('Pinterest')
+                                )
+                              ) ||
+                              // Also check source URL for social media domains
+                              (result.source && (
+                                result.source.includes('linkedin.com') || 
+                                result.source.includes('facebook.com') || 
+                                result.source.includes('twitter.com') || 
+                                result.source.includes('x.com') ||
+                                result.source.includes('instagram.com') || 
+                                result.source.includes('tiktok.com') ||
+                                result.source.includes('youtube.com')
+                              ));
 
         if (isSocialMedia) {
           socialResults.push(result);
-          console.log(`Categorized as social: ${result.name} (${result.source})`);
+          console.log(`✓ Categorized as SOCIAL: ${result.name} (${result.source}) - ID: ${result.id}`);
         } else {
           webResults.push(result);
-          console.log(`Categorized as web: ${result.name} (${result.source})`);
+          console.log(`✓ Categorized as WEB: ${result.name} (${result.source}) - ID: ${result.id}`);
         }
       } catch (error) {
         console.error(`Error categorizing result ${index}:`, error, result);

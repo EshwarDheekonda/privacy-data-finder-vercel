@@ -70,16 +70,19 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
   let processedWebpages = 0;
   let processedSocialMedia = 0;
   
-  // Transform webpages - with enhanced safety checks
+  // Transform webpages - with enhanced safety checks and comprehensive validation
   if (rawResponse.webpages && Array.isArray(rawResponse.webpages)) {
     console.log(`Processing ${rawResponse.webpages.length} webpages`);
     rawResponse.webpages.forEach((webpage, index) => {
       try {
-        if (webpage && webpage.title && webpage.url) {
-          allResults.push(transformWebpageResult(webpage, index));
+        // More lenient validation - accept results with at least title OR url
+        if (webpage && (webpage.title || webpage.url)) {
+          const transformedResult = transformWebpageResult(webpage, index);
+          allResults.push(transformedResult);
           processedWebpages++;
+          console.log(`✓ Processed webpage ${index + 1}: ${transformedResult.name} (${transformedResult.id})`);
         } else {
-          console.warn(`Invalid webpage at index ${index}:`, webpage);
+          console.warn(`Invalid webpage at index ${index} - missing title and URL:`, webpage);
         }
       } catch (error) {
         console.error(`Error transforming webpage ${index}:`, error, webpage);
@@ -89,7 +92,7 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
     console.warn('No webpages found or webpages is not an array:', rawResponse.webpages);
   }
   
-  // Transform social media results - with enhanced safety checks  
+  // Transform social media results - with enhanced safety checks and comprehensive validation
   if (rawResponse.social_media && typeof rawResponse.social_media === 'object') {
     console.log('Processing social media results:', Object.keys(rawResponse.social_media));
     Object.entries(rawResponse.social_media).forEach(([platform, results]) => {
@@ -97,9 +100,12 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
         console.log(`Processing ${results.length} ${platform} results`);
         results.forEach((result: any, index: number) => {
           try {
-            if (result && (result.title || result.name || result.url)) {
-              allResults.push(transformSocialMediaResult(result, platform, index));
+            // More lenient validation - accept any non-null result
+            if (result && typeof result === 'object') {
+              const transformedResult = transformSocialMediaResult(result, platform, index);
+              allResults.push(transformedResult);
               processedSocialMedia++;
+              console.log(`✓ Processed ${platform} ${index + 1}: ${transformedResult.name} (${transformedResult.id})`);
             } else {
               console.warn(`Invalid ${platform} result at index ${index}:`, result);
             }
@@ -115,13 +121,44 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
     console.warn('No social media results found or invalid structure:', rawResponse.social_media);
   }
 
-  console.log(`Transformation complete:`, {
-    total_backend_results: rawResponse.total_results,
+  // Comprehensive result validation and error reporting
+  const expectedTotal = rawResponse.total_results;
+  const actualTotal = allResults.length;
+  const missingCount = expectedTotal - actualTotal;
+  
+  console.log(`🔍 TRANSFORMATION COMPLETE:`, {
+    total_backend_results: expectedTotal,
     processed_webpages: processedWebpages,
     processed_social_media: processedSocialMedia,
-    total_transformed: allResults.length,
-    missing_results: rawResponse.total_results - allResults.length
+    total_transformed: actualTotal,
+    missing_results: missingCount,
+    success_rate: `${Math.round((actualTotal / expectedTotal) * 100)}%`
   });
+
+  // Report detailed breakdown by result type
+  const webpageResults = allResults.filter(r => r.id.startsWith('webpage') || r.id.startsWith('social-webpage'));
+  const socialResults = allResults.filter(r => r.id.startsWith('social-') && !r.id.startsWith('social-webpage'));
+  
+  console.log(`📊 RESULT BREAKDOWN:`, {
+    webpage_results: webpageResults.length,
+    social_media_results: socialResults.length,
+    backend_webpages: rawResponse.webpages?.length || 0,
+    backend_social_total: rawResponse.total_social_results || 0,
+    backend_social_actual: Object.values(rawResponse.social_media || {}).reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0)
+  });
+
+  // Alert if we're missing significant results
+  if (missingCount > 0) {
+    console.warn(`⚠️ MISSING RESULTS DETECTED: ${missingCount} results were not processed successfully`);
+    
+    // Try to identify what we might have missed
+    if (rawResponse.webpages) {
+      const skippedWebpages = rawResponse.webpages.filter(w => !w.title && !w.url);
+      if (skippedWebpages.length > 0) {
+        console.warn(`📝 Skipped ${skippedWebpages.length} webpages due to missing title/URL:`, skippedWebpages);
+      }
+    }
+  }
 
   return {
     query: rawResponse.query,
@@ -137,11 +174,23 @@ export const transformWebpageResult = (webpage: RawWebpageResult, index: number)
   const riskLevel = getRiskLevelFromScore(webpage.relevance_score);
   const confidence = Math.max(0.3, webpage.relevance_score); // Ensure minimum confidence
   
-  // Determine data types based on actual domain and content
-  const dataTypes = getDataTypesForWebpage(webpage.domain, webpage.description);
+  // Determine data types based on domain, content, and URL
+  const dataTypes = getDataTypesForWebpage(webpage.domain, webpage.description, webpage.url);
+  
+  // Determine if this is actually a social media result based on content
+  const isSocialMediaResult = dataTypes.some(type => 
+    type.includes('Profile') && (
+      type.includes('LinkedIn') || type.includes('Facebook') || type.includes('Twitter') || 
+      type.includes('Instagram') || type.includes('TikTok') || type.includes('YouTube') ||
+      type.includes('Social Media')
+    )
+  );
+  
+  // Use appropriate ID prefix based on content analysis
+  const idPrefix = isSocialMediaResult ? 'social-webpage' : 'webpage';
   
   return {
-    id: `webpage-${index}-${Date.now()}`,
+    id: `${idPrefix}-${index}-${Date.now()}`,
     name: webpage.title,
     source: webpage.url,
     risk_level: riskLevel,
@@ -150,7 +199,7 @@ export const transformWebpageResult = (webpage: RawWebpageResult, index: number)
     confidence: confidence,
     title: webpage.title,
     snippet: webpage.description,
-    reasoning: `Found on ${webpage.domain} with relevance score ${webpage.relevance_score}`,
+    reasoning: `Found on ${webpage.domain} with relevance score ${webpage.relevance_score}${isSocialMediaResult ? ' (Social Media Profile)' : ''}`,
   };
 };
 
@@ -173,31 +222,56 @@ export const transformSocialMediaResult = (result: any, platform: string, index:
   };
 };
 
-// Helper function to determine data types for webpages
-export const getDataTypesForWebpage = (domain: string, description: string): string[] => {
+// Helper function to determine data types for webpages with improved social media detection
+export const getDataTypesForWebpage = (domain: string, description: string, url: string = ''): string[] => {
   const dataTypes: string[] = [];
+  const lowerDescription = description.toLowerCase();
+  const lowerUrl = url.toLowerCase();
   
-  // Check domain patterns
-  if (domain.includes('linkedin')) {
-    dataTypes.push('Professional Profile', 'LinkedIn');
-  } else if (domain.includes('facebook')) {
-    dataTypes.push('Social Media Profile', 'Facebook');
-  } else if (domain.includes('twitter') || domain.includes('x.com')) {
-    dataTypes.push('Social Media Profile', 'Twitter');
-  } else if (domain.includes('instagram')) {
-    dataTypes.push('Social Media Profile', 'Instagram');
-  } else if (domain.includes('researchgate') || domain.includes('academia')) {
-    dataTypes.push('Academic Profile', 'Research Publications');
-  } else if (domain.includes('university') || domain.includes('edu')) {
-    dataTypes.push('Academic Information', 'Educational Background');
-  } else if (domain.includes('directory') || description.toLowerCase().includes('directory')) {
-    dataTypes.push('Directory Listing', 'Contact Information');
-  } else if (domain.includes('zoominfo') || domain.includes('whitepages')) {
-    dataTypes.push('Business Directory', 'Contact Information');
-  } else if (domain.includes('ratemyprofessors')) {
-    dataTypes.push('Public Reviews', 'Professional Information');
-  } else {
-    dataTypes.push('Public Profile', 'Web Presence');
+  // Enhanced social media detection - check URL and description content
+  const socialMediaPatterns = [
+    { platforms: ['linkedin'], types: ['Professional Profile', 'LinkedIn Profile'] },
+    { platforms: ['facebook'], types: ['Social Media Profile', 'Facebook Profile'] },
+    { platforms: ['twitter', 'x.com'], types: ['Social Media Profile', 'Twitter Profile'] },
+    { platforms: ['instagram'], types: ['Social Media Profile', 'Instagram Profile'] },
+    { platforms: ['tiktok'], types: ['Social Media Profile', 'TikTok Profile'] },
+    { platforms: ['youtube'], types: ['Social Media Profile', 'YouTube Profile'] },
+    { platforms: ['snapchat'], types: ['Social Media Profile', 'Snapchat Profile'] },
+    { platforms: ['pinterest'], types: ['Social Media Profile', 'Pinterest Profile'] }
+  ];
+  
+  let isSocialMedia = false;
+  
+  // Check if this is a social media result by examining URL and description
+  for (const pattern of socialMediaPatterns) {
+    const foundInDomain = pattern.platforms.some(platform => domain.includes(platform));
+    const foundInUrl = pattern.platforms.some(platform => lowerUrl.includes(platform));
+    const foundInDescription = pattern.platforms.some(platform => lowerDescription.includes(platform));
+    
+    if (foundInDomain || foundInUrl || foundInDescription) {
+      dataTypes.push(...pattern.types);
+      isSocialMedia = true;
+      break;
+    }
+  }
+  
+  // If not social media, categorize as other types
+  if (!isSocialMedia) {
+    if (domain.includes('researchgate') || domain.includes('academia') || lowerDescription.includes('research')) {
+      dataTypes.push('Academic Profile', 'Research Publications');
+    } else if (domain.includes('university') || domain.includes('edu') || lowerDescription.includes('university')) {
+      dataTypes.push('Academic Information', 'Educational Background');
+    } else if (domain.includes('directory') || lowerDescription.includes('directory')) {
+      dataTypes.push('Directory Listing', 'Contact Information');
+    } else if (domain.includes('zoominfo') || domain.includes('whitepages') || lowerDescription.includes('business directory')) {
+      dataTypes.push('Business Directory', 'Contact Information');
+    } else if (domain.includes('ratemyprofessors') || lowerDescription.includes('professor rating')) {
+      dataTypes.push('Public Reviews', 'Professional Information');
+    } else if (domain.includes('news') || lowerDescription.includes('news')) {
+      dataTypes.push('News Article', 'Public Mention');
+    } else {
+      dataTypes.push('Public Profile', 'Web Presence');
+    }
   }
   
   // Always add general categories
