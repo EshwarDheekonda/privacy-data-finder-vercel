@@ -157,8 +157,7 @@ export const searchApi = {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Add timeout - increased for longer processing
-        signal: AbortSignal.timeout(180000), // 3 minute timeout
+        // No timeout - let backend take as long as needed
       });
 
       console.log('API Response status:', response.status);
@@ -207,32 +206,6 @@ export const searchApi = {
         );
       }
 
-      // Handle timeout errors with retry logic
-      if (error instanceof DOMException && error.name === 'TimeoutError') {
-        console.log('API timeout occurred, retry count:', retryCount);
-        if (retryCount < 1) {
-          // Retry once for timeout errors
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          return searchApi.searchByName(searchName, retryCount + 1);
-        }
-        
-        // After all retries, create a mock response to show at least something
-        console.log('Final timeout - creating partial response');
-        const partialResponse: SearchResponse = {
-          query: searchName,
-          total_results: 0,
-          scan_time: 180,
-          timestamp: new Date().toISOString(),
-          results: []
-        };
-        
-        throw new SearchApiError(
-          'The search is taking longer than expected. Please try again with a shorter timeout or contact support.',
-          'TIMEOUT_ERROR',
-          { partialResponse }
-        );
-      }
-
       // Handle other errors
       throw new SearchApiError(
         'An unexpected error occurred during the search. Please try again.',
@@ -252,13 +225,6 @@ export const handleApiError = (error: SearchApiError | Error): void => {
       case 'NETWORK_ERROR':
         toast({
           title: 'Connection Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-        break;
-      case 'TIMEOUT_ERROR':
-        toast({
-          title: 'Request Timeout',
           description: error.message,
           variant: 'destructive',
         });

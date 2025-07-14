@@ -53,25 +53,7 @@ export const HeroSection = () => {
       
     } catch (error: any) {
       console.error('Search error caught:', error);
-      
-      // Check if we have partial results to show despite the error
-      if (error instanceof SearchApiError && error.code === 'TIMEOUT_ERROR' && error.details?.partialResponse) {
-        console.log('Showing partial results due to timeout');
-        navigate('/results', { 
-          state: { 
-            searchResponse: error.details.partialResponse,
-            hasTimeout: true 
-          }
-        });
-        
-        toast({
-          title: 'Partial Results',
-          description: 'Search timed out but we found some results. Try searching again for complete results.',
-          variant: 'destructive',
-        });
-      } else {
-        handleApiError(error);
-      }
+      handleApiError(error);
     } finally {
       setIsLoading(false);
       setLoadingMessage('');
