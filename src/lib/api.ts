@@ -59,19 +59,50 @@ export interface ApiError {
 
 // Data Transformation Functions
 export const transformApiResponse = (rawResponse: RawApiResponse): SearchResponse => {
+  console.log('Starting transformation with raw data:', {
+    total_results: rawResponse.total_results,
+    webpages_length: rawResponse.webpages?.length,
+    social_media_structure: rawResponse.social_media
+  });
+  
   const allResults: SearchResult[] = [];
   
-  // Transform webpages
-  rawResponse.webpages.forEach((webpage, index) => {
-    allResults.push(transformWebpageResult(webpage, index));
-  });
-  
-  // Transform social media results
-  Object.entries(rawResponse.social_media).forEach(([platform, results]) => {
-    results.forEach((result: any, index: number) => {
-      allResults.push(transformSocialMediaResult(result, platform, index));
+  // Transform webpages - with safety checks
+  if (rawResponse.webpages && Array.isArray(rawResponse.webpages)) {
+    console.log(`Processing ${rawResponse.webpages.length} webpages`);
+    rawResponse.webpages.forEach((webpage, index) => {
+      try {
+        allResults.push(transformWebpageResult(webpage, index));
+      } catch (error) {
+        console.error(`Error transforming webpage ${index}:`, error, webpage);
+      }
     });
-  });
+  } else {
+    console.warn('No webpages found or webpages is not an array:', rawResponse.webpages);
+  }
+  
+  // Transform social media results - with safety checks
+  if (rawResponse.social_media && typeof rawResponse.social_media === 'object') {
+    console.log('Processing social media results:', Object.keys(rawResponse.social_media));
+    Object.entries(rawResponse.social_media).forEach(([platform, results]) => {
+      if (Array.isArray(results)) {
+        console.log(`Processing ${results.length} ${platform} results`);
+        results.forEach((result: any, index: number) => {
+          try {
+            allResults.push(transformSocialMediaResult(result, platform, index));
+          } catch (error) {
+            console.error(`Error transforming ${platform} result ${index}:`, error, result);
+          }
+        });
+      } else {
+        console.warn(`${platform} results is not an array:`, results);
+      }
+    });
+  } else {
+    console.warn('No social media results found or invalid structure:', rawResponse.social_media);
+  }
+
+  console.log(`Total results after transformation: ${allResults.length}`);
 
   return {
     query: rawResponse.query,
@@ -176,15 +207,23 @@ export const searchApi = {
       console.log('Raw API Data received:', {
         query: rawData.query,
         total_results: rawData.total_results,
+        total_social_results: rawData.total_social_results,
         webpages_count: rawData.webpages?.length || 0,
-        social_media_keys: Object.keys(rawData.social_media || {}),
-        sample_webpage: rawData.webpages?.[0]
+        webpages_sample: rawData.webpages?.slice(0, 3),
+        social_media_structure: rawData.social_media,
+        social_media_counts: Object.entries(rawData.social_media || {}).map(([platform, results]) => ({
+          platform,
+          count: Array.isArray(results) ? results.length : 0,
+          sample: Array.isArray(results) ? results[0] : results
+        }))
       });
       
       const transformedData = transformApiResponse(rawData);
       console.log('Transformed data:', {
         total_results: transformedData.total_results,
         results_count: transformedData.results?.length || 0,
+        webpage_results: transformedData.results?.filter(r => r.id.startsWith('webpage')).length || 0,
+        social_results: transformedData.results?.filter(r => r.id.startsWith('social')).length || 0,
         sample_result: transformedData.results?.[0]
       });
       return transformedData;
