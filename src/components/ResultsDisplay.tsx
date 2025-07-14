@@ -29,33 +29,43 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
     firstResult: searchResponse?.results?.[0]
   });
 
-  // Categorize results
+  // Categorize results with improved logic
   const categorizedResults = useMemo(() => {
-    const socialMediaPlatforms = ['facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'youtube'];
-    
     const webResults: SearchResult[] = [];
     const socialResults: SearchResult[] = [];
 
     // Safeguard against undefined results
     if (!searchResponse?.results || !Array.isArray(searchResponse.results)) {
+      console.warn('No results array found:', searchResponse);
       return { webResults, socialResults };
     }
 
-    searchResponse.results.forEach(result => {
-      const source = result.source.toLowerCase();
-      const isSocial = socialMediaPlatforms.some(platform => 
-        source.includes(platform) || result.data_types.some(type => 
-          type.toLowerCase().includes('social')
-        )
-      );
+    console.log(`Categorizing ${searchResponse.results.length} results`);
 
-      if (isSocial) {
-        socialResults.push(result);
-      } else {
+    searchResponse.results.forEach((result, index) => {
+      try {
+        // Use result ID to determine if it's social media (more reliable than URL parsing)
+        const isSocialMedia = result.id.startsWith('social-') || 
+                              result.data_types.some(type => 
+                                ['Social Media', 'Facebook Profile', 'Twitter Profile', 'LinkedIn Profile', 
+                                 'Instagram Profile', 'TikTok Profile', 'YouTube Profile'].includes(type)
+                              );
+
+        if (isSocialMedia) {
+          socialResults.push(result);
+          console.log(`Categorized as social: ${result.name} (${result.source})`);
+        } else {
+          webResults.push(result);
+          console.log(`Categorized as web: ${result.name} (${result.source})`);
+        }
+      } catch (error) {
+        console.error(`Error categorizing result ${index}:`, error, result);
+        // Default to web if there's an error
         webResults.push(result);
       }
     });
 
+    console.log(`Categorization complete: ${webResults.length} web, ${socialResults.length} social`);
     return { webResults, socialResults };
   }, [searchResponse?.results]);
 

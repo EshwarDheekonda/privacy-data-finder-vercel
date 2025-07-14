@@ -61,18 +61,26 @@ export interface ApiError {
 export const transformApiResponse = (rawResponse: RawApiResponse): SearchResponse => {
   console.log('Starting transformation with raw data:', {
     total_results: rawResponse.total_results,
+    total_social_results: rawResponse.total_social_results,
     webpages_length: rawResponse.webpages?.length,
-    social_media_structure: rawResponse.social_media
+    social_media_structure: rawResponse.social_media ? Object.keys(rawResponse.social_media) : 'missing'
   });
   
   const allResults: SearchResult[] = [];
+  let processedWebpages = 0;
+  let processedSocialMedia = 0;
   
-  // Transform webpages - with safety checks
+  // Transform webpages - with enhanced safety checks
   if (rawResponse.webpages && Array.isArray(rawResponse.webpages)) {
     console.log(`Processing ${rawResponse.webpages.length} webpages`);
     rawResponse.webpages.forEach((webpage, index) => {
       try {
-        allResults.push(transformWebpageResult(webpage, index));
+        if (webpage && webpage.title && webpage.url) {
+          allResults.push(transformWebpageResult(webpage, index));
+          processedWebpages++;
+        } else {
+          console.warn(`Invalid webpage at index ${index}:`, webpage);
+        }
       } catch (error) {
         console.error(`Error transforming webpage ${index}:`, error, webpage);
       }
@@ -81,7 +89,7 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
     console.warn('No webpages found or webpages is not an array:', rawResponse.webpages);
   }
   
-  // Transform social media results - with safety checks
+  // Transform social media results - with enhanced safety checks  
   if (rawResponse.social_media && typeof rawResponse.social_media === 'object') {
     console.log('Processing social media results:', Object.keys(rawResponse.social_media));
     Object.entries(rawResponse.social_media).forEach(([platform, results]) => {
@@ -89,20 +97,31 @@ export const transformApiResponse = (rawResponse: RawApiResponse): SearchRespons
         console.log(`Processing ${results.length} ${platform} results`);
         results.forEach((result: any, index: number) => {
           try {
-            allResults.push(transformSocialMediaResult(result, platform, index));
+            if (result && (result.title || result.name || result.url)) {
+              allResults.push(transformSocialMediaResult(result, platform, index));
+              processedSocialMedia++;
+            } else {
+              console.warn(`Invalid ${platform} result at index ${index}:`, result);
+            }
           } catch (error) {
             console.error(`Error transforming ${platform} result ${index}:`, error, result);
           }
         });
-      } else {
-        console.warn(`${platform} results is not an array:`, results);
+      } else if (results && results !== null) {
+        console.warn(`${platform} results is not an array:`, typeof results, results);
       }
     });
   } else {
     console.warn('No social media results found or invalid structure:', rawResponse.social_media);
   }
 
-  console.log(`Total results after transformation: ${allResults.length}`);
+  console.log(`Transformation complete:`, {
+    total_backend_results: rawResponse.total_results,
+    processed_webpages: processedWebpages,
+    processed_social_media: processedSocialMedia,
+    total_transformed: allResults.length,
+    missing_results: rawResponse.total_results - allResults.length
+  });
 
   return {
     query: rawResponse.query,
@@ -118,12 +137,15 @@ export const transformWebpageResult = (webpage: RawWebpageResult, index: number)
   const riskLevel = getRiskLevelFromScore(webpage.relevance_score);
   const confidence = Math.max(0.3, webpage.relevance_score); // Ensure minimum confidence
   
+  // Determine data types based on actual domain and content
+  const dataTypes = getDataTypesForWebpage(webpage.domain, webpage.description);
+  
   return {
     id: `webpage-${index}-${Date.now()}`,
     name: webpage.title,
     source: webpage.url,
     risk_level: riskLevel,
-    data_types: ['Personal Information', 'Public Profile'],
+    data_types: dataTypes,
     found_at: new Date().toISOString(),
     confidence: confidence,
     title: webpage.title,
@@ -133,18 +155,70 @@ export const transformWebpageResult = (webpage: RawWebpageResult, index: number)
 };
 
 export const transformSocialMediaResult = (result: any, platform: string, index: number): SearchResult => {
+  // Determine risk level based on platform and content
+  const riskLevel = getSocialMediaRiskLevel(platform, result);
+  const confidence = 0.8; // Higher confidence for actual social media results
+  
   return {
     id: `social-${platform}-${index}-${Date.now()}`,
-    name: result.title || `${platform} Profile`,
-    source: result.url || platform,
-    risk_level: 'medium' as const,
-    data_types: ['Social Media Profile', 'Personal Information'],
+    name: result.title || result.name || `${platform.charAt(0).toUpperCase() + platform.slice(1)} Profile`,
+    source: result.url || `https://${platform}.com`,
+    risk_level: riskLevel,
+    data_types: [`${platform.charAt(0).toUpperCase() + platform.slice(1)} Profile`, 'Social Media', 'Personal Information'],
     found_at: new Date().toISOString(),
-    confidence: 0.7,
-    title: result.title,
-    snippet: result.description,
+    confidence: confidence,
+    title: result.title || result.name,
+    snippet: result.description || result.bio || result.snippet,
     reasoning: `Found on ${platform} social media platform`,
   };
+};
+
+// Helper function to determine data types for webpages
+export const getDataTypesForWebpage = (domain: string, description: string): string[] => {
+  const dataTypes: string[] = [];
+  
+  // Check domain patterns
+  if (domain.includes('linkedin')) {
+    dataTypes.push('Professional Profile', 'LinkedIn');
+  } else if (domain.includes('facebook')) {
+    dataTypes.push('Social Media Profile', 'Facebook');
+  } else if (domain.includes('twitter') || domain.includes('x.com')) {
+    dataTypes.push('Social Media Profile', 'Twitter');
+  } else if (domain.includes('instagram')) {
+    dataTypes.push('Social Media Profile', 'Instagram');
+  } else if (domain.includes('researchgate') || domain.includes('academia')) {
+    dataTypes.push('Academic Profile', 'Research Publications');
+  } else if (domain.includes('university') || domain.includes('edu')) {
+    dataTypes.push('Academic Information', 'Educational Background');
+  } else if (domain.includes('directory') || description.toLowerCase().includes('directory')) {
+    dataTypes.push('Directory Listing', 'Contact Information');
+  } else if (domain.includes('zoominfo') || domain.includes('whitepages')) {
+    dataTypes.push('Business Directory', 'Contact Information');
+  } else if (domain.includes('ratemyprofessors')) {
+    dataTypes.push('Public Reviews', 'Professional Information');
+  } else {
+    dataTypes.push('Public Profile', 'Web Presence');
+  }
+  
+  // Always add general categories
+  dataTypes.push('Personal Information');
+  
+  return [...new Set(dataTypes)]; // Remove duplicates
+};
+
+// Helper function to determine risk level for social media
+export const getSocialMediaRiskLevel = (platform: string, result: any): 'low' | 'medium' | 'high' | 'critical' => {
+  // LinkedIn tends to be more professional/public
+  if (platform === 'linkedin') return 'medium';
+  
+  // Facebook, Instagram can be more personal
+  if (platform === 'facebook' || platform === 'instagram') return 'high';
+  
+  // Twitter is often public
+  if (platform === 'twitter') return 'medium';
+  
+  // Default for other platforms
+  return 'medium';
 };
 
 export const getRiskLevelFromScore = (score: number): 'low' | 'medium' | 'high' | 'critical' => {
