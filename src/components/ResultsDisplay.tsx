@@ -16,7 +16,6 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
   const [filters, setFilters] = useState<FilterState>({
     platforms: [],
     riskLevels: [],
-    confidenceRange: [0, 100],
     domains: [],
   });
 
@@ -91,13 +90,6 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
       // Risk level filter - when no risk levels selected, show all
       if (filters.riskLevels.length > 0 && !filters.riskLevels.includes(result.risk_level)) {
         console.log(`❌ Risk level filter excluded: ${result.name} (${result.risk_level})`);
-        return false;
-      }
-
-      // Confidence range filter
-      const confidence = Math.round(result.confidence * 100);
-      if (confidence < filters.confidenceRange[0] || confidence > filters.confidenceRange[1]) {
-        console.log(`❌ Confidence filter excluded: ${result.name} (${confidence}%)`);
         return false;
       }
 

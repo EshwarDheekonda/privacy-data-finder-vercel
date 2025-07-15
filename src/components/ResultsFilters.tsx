@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+
 import { SearchResult } from '@/lib/api';
 import { Filter, X } from 'lucide-react';
 import { useState } from 'react';
@@ -16,7 +16,6 @@ interface ResultsFiltersProps {
 export interface FilterState {
   platforms: string[];
   riskLevels: SearchResult['risk_level'][];
-  confidenceRange: [number, number];
   domains: string[];
 }
 
@@ -25,7 +24,6 @@ export const ResultsFilters = ({ results, onFilterChange }: ResultsFiltersProps)
   const [filters, setFilters] = useState<FilterState>({
     platforms: [],
     riskLevels: [],
-    confidenceRange: [0, 100],
     domains: [],
   });
 
@@ -71,7 +69,6 @@ export const ResultsFilters = ({ results, onFilterChange }: ResultsFiltersProps)
     const clearedFilters: FilterState = {
       platforms: [],
       riskLevels: [],
-      confidenceRange: [0, 100],
       domains: [],
     };
     setFilters(clearedFilters);
@@ -81,8 +78,7 @@ export const ResultsFilters = ({ results, onFilterChange }: ResultsFiltersProps)
   const activeFilterCount = 
     filters.platforms.length + 
     filters.riskLevels.length + 
-    filters.domains.length +
-    (filters.confidenceRange[0] > 0 || filters.confidenceRange[1] < 100 ? 1 : 0);
+    filters.domains.length;
 
   return (
     <div className="space-y-4">
@@ -157,21 +153,6 @@ export const ResultsFilters = ({ results, onFilterChange }: ResultsFiltersProps)
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Confidence Range Filter */}
-            <div>
-              <Label className="text-sm font-medium mb-3 block">
-                Confidence Score: {filters.confidenceRange[0]}% - {filters.confidenceRange[1]}%
-              </Label>
-              <Slider
-                value={filters.confidenceRange}
-                onValueChange={(value) => updateFilters({ confidenceRange: value as [number, number] })}
-                max={100}
-                min={0}
-                step={5}
-                className="w-full"
-              />
             </div>
 
             {/* Domain Filter */}

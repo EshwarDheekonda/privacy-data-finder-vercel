@@ -43,8 +43,6 @@ export const ResultCard = ({ result }: ResultCardProps) => {
   const { toggleResult, isSelected } = useResults();
   const selected = isSelected(result.id);
 
-  const confidencePercentage = Math.round(result.confidence * 100);
-  
   return (
     <Card className={cn(
       "transition-all duration-200 hover:shadow-md",
@@ -100,20 +98,6 @@ export const ResultCard = ({ result }: ResultCardProps) => {
             <p className="text-sm text-foreground">{result.reasoning}</p>
           </div>
         )}
-
-        {/* Confidence Score */}
-        <div>
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span className="text-muted-foreground">Confidence Score</span>
-            <span className="font-medium">{confidencePercentage}%</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-2">
-            <div 
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${confidencePercentage}%` }}
-            />
-          </div>
-        </div>
 
         {/* Found Date */}
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

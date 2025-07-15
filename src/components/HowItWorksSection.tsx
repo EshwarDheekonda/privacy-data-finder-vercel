@@ -11,7 +11,7 @@ export const HowItWorksSection = () => {
     {
       icon: UserCheck,
       title: "Select Relevant Results",
-      description: "Review the discovered profiles and data sources. Our AI helps you identify the most relevant matches based on context and confidence scores.",
+      description: "Review the discovered profiles and data sources. Our AI helps you identify the most relevant matches based on context and relevance analysis.",
       detail: "AI-powered relevance scoring"
     },
     {
