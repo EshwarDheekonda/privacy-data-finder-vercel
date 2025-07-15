@@ -140,12 +140,15 @@ export const transformWebpageResult = (webpage: RawWebpageResult, index: number)
   const riskLevel = getRiskLevelFromScore(webpage.relevance_score || 0.5);
   const confidence = Math.max(0.3, webpage.relevance_score || 0.5);
   
-  // Simplified categorization based on domain
+  // Check if this webpage is actually a social media profile
   const isSocialMedia = isWebpageSocialMedia(webpage.domain, webpage.url);
   const dataTypes = getDataTypesForWebpage(webpage.domain, webpage.description || '', webpage.url);
   
+  // Use social- prefix for social media results to match categorization logic
+  const idPrefix = isSocialMedia ? 'social-webpage' : 'webpage';
+  
   return {
-    id: `webpage-${index}`,
+    id: `${idPrefix}-${index}`,
     name: webpage.title || webpage.domain || 'Untitled',
     source: webpage.url || `https://${webpage.domain}`,
     risk_level: riskLevel,

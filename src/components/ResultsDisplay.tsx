@@ -57,16 +57,17 @@ export const ResultsDisplay = ({ searchResponse }: ResultsDisplayProps) => {
     console.log(`📋 Categorizing ${searchResponse.results.length} results`);
 
     searchResponse.results.forEach((result, index) => {
-      // Primary categorization: Check source URL domain
+      // Updated categorization logic to match new ID format
       const isSocialMedia = result.id.startsWith('social-') || 
+                           result.id.startsWith('social-webpage-') ||
                            (result.source && isSocialMediaDomain(result.source));
 
       if (isSocialMedia) {
         socialResults.push(result);
-        console.log(`👥 SOCIAL: ${result.name} (${getDomainFromUrl(result.source)})`);
+        console.log(`👥 SOCIAL: ${result.name} (${getDomainFromUrl(result.source)}) [ID: ${result.id}]`);
       } else {
         webResults.push(result);
-        console.log(`🌐 WEB: ${result.name} (${getDomainFromUrl(result.source)})`);
+        console.log(`🌐 WEB: ${result.name} (${getDomainFromUrl(result.source)}) [ID: ${result.id}]`);
       }
     });
 
