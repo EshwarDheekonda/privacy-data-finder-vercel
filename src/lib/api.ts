@@ -43,6 +43,75 @@ export interface SearchResult {
   reasoning?: string;
 }
 
+// Backend Response Interface (matching Python backend exactly)
+export interface BackendAnalysisResponse {
+  // PII Categories (25 total) - exactly as backend returns them
+  Name: string[];
+  Location: string[];
+  Email: string[];
+  Phone: string[];
+  DOB: string[];
+  Address: string[];
+  Gender: string[];
+  Employer: string[];
+  Education: string[];
+  'Birth Place': string[];
+  'Personal Cell': string[];
+  'Business Phone': string[];
+  'Facebook Account': string[];
+  'Twitter Account': string[];
+  'Instagram Account': string[];
+  'LinkedIn Account': string[];
+  'TikTok Account': string[];
+  'YouTube Account': string[];
+  DDL: string[];
+  Passport: string[];
+  'Credit Card': string[];
+  SSN: string[];
+  'Family Members': string[];
+  Occupation: string[];
+  Salary: string[];
+  Website: string[];
+
+  // Risk Assessment - exactly as backend returns
+  risk_score: number;
+  risk_level: string; // "No Risk" | "Very Low" | "Low" | "Medium" | "High" | "Very High"
+  risk_analysis: {
+    'High Risk': string;
+    'Medium Risk': string;
+    'Low Risk': string;
+    'Social Media': string;
+  };
+
+  // Processing Summary - exactly as backend returns
+  extraction_summary: {
+    total_sources: number;
+    webpage_sources: number;
+    social_media_sources: number;
+    successful_extractions: number;
+    failed_extractions: number;
+    total_pii_found: number;
+    pii_categories_found: number;
+    data_points_extracted: number;
+    extraction_time: number;
+    extraction_details: Array<{
+      source: string;
+      type: string;
+      status: string;
+      data_points: number;
+      username?: string;
+      error?: string;
+    }>;
+  };
+
+  // Recommendations - exactly as backend returns
+  recommendations: string[];
+
+  // Error case fields (when no data found)
+  message?: string;
+  suggestions?: string[];
+}
+
 export interface SearchResponse {
   query: string;
   total_results: number;
@@ -353,15 +422,20 @@ export const searchApi = {
   },
 
   /**
-   * Extract detailed information for selected URLs
+   * Extract detailed information for selected URLs and social media
+   * Updated to match backend POST /extract endpoint
    */
-  async extractDetails(searchName: string, selectedUrls: string[]): Promise<any> {
+  async extractDetails(
+    searchName: string, 
+    selectedUrls: string[] = [], 
+    selectedSocial: any[] = []
+  ): Promise<BackendAnalysisResponse> {
     if (!searchName.trim()) {
       throw new SearchApiError('Search name cannot be empty');
     }
 
-    if (!selectedUrls || selectedUrls.length === 0) {
-      throw new SearchApiError('No URLs selected for extraction');
+    if ((!selectedUrls || selectedUrls.length === 0) && (!selectedSocial || selectedSocial.length === 0)) {
+      throw new SearchApiError('No URLs or social media profiles selected for extraction');
     }
 
     try {
@@ -370,7 +444,9 @@ export const searchApi = {
       console.log('Sending extract request:', {
         searchName: searchName.trim(),
         selectedUrls,
-        urlCount: selectedUrls.length
+        selectedSocial,
+        urlCount: selectedUrls.length,
+        socialCount: selectedSocial.length
       });
 
       const response = await fetch(url.toString(), {
@@ -380,7 +456,8 @@ export const searchApi = {
         },
         body: JSON.stringify({
           searchName: searchName.trim(),
-          selectedUrls: selectedUrls
+          selectedUrls: selectedUrls,
+          selectedSocial: selectedSocial  // Add this missing parameter
         }),
       });
 
@@ -396,8 +473,8 @@ export const searchApi = {
         );
       }
 
-      // Return the analysis data from the backend
-      const responseData = await response.json();
+      // Return the analysis data from the backend exactly as received
+      const responseData: BackendAnalysisResponse = await response.json();
       console.log('Extract request completed successfully:', responseData);
       return responseData;
     } catch (error) {
