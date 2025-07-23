@@ -13,6 +13,7 @@ import { RecommendationsSection } from '@/components/analysis/RecommendationsSec
 import { DetailedResultCard } from '@/components/analysis/DetailedResultCard';
 import { ArrowLeft, Download, Share, AlertTriangle, Shield, Eye } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { searchApi, handleApiError } from '@/lib/api';
 
 const DetailedResults = () => {
   const location = useLocation();
@@ -22,112 +23,51 @@ const DetailedResults = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // In a real implementation, this would fetch from the API
-    // For now, we'll simulate the data structure
-    const simulateAnalysisData = (): DetailedAnalysisResponse => {
-      return {
-        query: location.state?.query || 'John Doe',
-        total_processed: 12,
-        analysis_timestamp: new Date().toISOString(),
-        processing_time: 45.2,
-        results: [
-          {
-            id: 'analysis-1',
-            source_url: 'https://linkedin.com/in/johndoe',
-            source_type: 'social_media',
-            platform: 'LinkedIn',
-            title: 'John Doe - Software Engineer',
-            content_type: 'profile',
-            analysis_timestamp: new Date().toISOString(),
-            processing_time: 3.2,
-            status: 'completed',
-            pii_data: [
-              {
-                type: 'email',
-                value: 'john.doe@company.com',
-                confidence: 0.95,
-                context: 'Contact information in profile',
-                location: 'Profile header',
-                severity: 'medium'
-              },
-              {
-                type: 'phone',
-                value: '+1-555-0123',
-                confidence: 0.88,
-                context: 'Listed in contact section',
-                location: 'Contact details',
-                severity: 'high'
-              }
-            ],
-            overall_risk_score: 7.2,
-            risk_level: 'high',
-            risk_factors: [
-              {
-                category: 'Public Exposure',
-                description: 'Profile is publicly visible and indexed by search engines',
-                severity: 'high',
-                impact: 'Personal information easily discoverable',
-                mitigation: 'Adjust privacy settings to limit public visibility'
-              }
-            ],
-            content_summary: 'Professional LinkedIn profile with detailed work history and contact information.',
-            key_findings: [
-              'Direct contact information exposed',
-              'Detailed employment history visible',
-              'Professional connections accessible'
-            ],
-            data_exposure: {
-              public: true,
-              indexed_by_search: true,
-              social_sharing: true,
-              archived: false
-            },
-            privacy_concerns: [
-              'Contact details publicly visible',
-              'Professional network exposed'
-            ],
-            recommendations: [
-              'Limit profile visibility to connections only',
-              'Remove direct contact information',
-              'Review connection privacy settings'
-            ],
-            metadata: {
-              page_title: 'John Doe - LinkedIn Profile',
-              description: 'Software Engineer at Tech Company',
-              last_modified: '2024-01-15T10:30:00Z',
-              content_length: 2450,
-              images_found: 3,
-              links_found: 12
-            }
-          }
-        ],
-        summary: {
-          total_pii_items: 15,
-          highest_risk_level: 'high',
-          most_common_pii_types: ['email', 'phone', 'personal_info'],
-          platforms_analyzed: ['LinkedIn', 'Facebook', 'Twitter'],
-          privacy_score: 3.2
-        },
-        global_recommendations: [
-          'Review and update privacy settings across all platforms',
-          'Consider removing or limiting publicly visible contact information',
-          'Enable two-factor authentication where available'
-        ],
-        immediate_actions: [
-          'Update LinkedIn privacy settings',
-          'Remove phone number from public profiles',
-          'Review Google search results for your name'
-        ]
-      };
+    const fetchAnalysisData = async () => {
+      try {
+        const state = location.state;
+        if (!state?.query || !state?.selectedUrls) {
+          console.error('Missing required data in location state:', state);
+          navigate('/');
+          return;
+        }
+
+        console.log('Fetching analysis data for:', {
+          query: state.query,
+          selectedUrls: state.selectedUrls,
+          urlCount: state.selectedUrls.length
+        });
+
+        // Call the extract API endpoint with the selected URLs
+        const analysisResponse = await searchApi.extractDetails(state.query, state.selectedUrls);
+        
+        console.log('Analysis response received:', analysisResponse);
+        
+        // Set the analysis data from the API response
+        setAnalysisData(analysisResponse);
+        setIsLoading(false);
+        
+      } catch (error) {
+        console.error('Error fetching analysis data:', error);
+        handleApiError(error as Error);
+        setIsLoading(false);
+        
+        // Show error toast and redirect
+        toast({
+          title: 'Analysis Failed',
+          description: 'Unable to load detailed analysis. Please try again.',
+          variant: 'destructive',
+        });
+        
+        // Redirect back to results after a delay
+        setTimeout(() => {
+          navigate('/results');
+        }, 2000);
+      }
     };
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const data = simulateAnalysisData();
-      setAnalysisData(data);
-      setIsLoading(false);
-    }, 1500);
-  }, [location.state]);
+    fetchAnalysisData();
+  }, [location.state, navigate]);
 
   const handleExportReport = () => {
     if (!analysisData) return;

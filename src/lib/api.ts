@@ -355,7 +355,7 @@ export const searchApi = {
   /**
    * Extract detailed information for selected URLs
    */
-  async extractDetails(searchName: string, selectedUrls: string[]): Promise<void> {
+  async extractDetails(searchName: string, selectedUrls: string[]): Promise<any> {
     if (!searchName.trim()) {
       throw new SearchApiError('Search name cannot be empty');
     }
@@ -396,10 +396,10 @@ export const searchApi = {
         );
       }
 
-      // For now, we just log success. The backend might return additional data in the future.
-      const responseData = await response.json().catch(() => ({}));
+      // Return the analysis data from the backend
+      const responseData = await response.json();
       console.log('Extract request completed successfully:', responseData);
-      
+      return responseData;
     } catch (error) {
       if (error instanceof SearchApiError) {
         throw error;
