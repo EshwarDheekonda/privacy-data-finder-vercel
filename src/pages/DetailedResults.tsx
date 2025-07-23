@@ -21,6 +21,8 @@ const DetailedResults = () => {
     const fetchAnalysisData = async () => {
       try {
         const state = location.state;
+        console.log('DetailedResults received state:', state);
+        
         if (!state?.query) {
           console.error('Missing query in location state:', state);
           navigate('/');
@@ -31,8 +33,15 @@ const DetailedResults = () => {
         const selectedUrls = state?.selectedUrls || [];
         const selectedSocial = state?.selectedSocial || [];
         
+        console.log('Data check:', {
+          selectedUrls,
+          selectedSocial,
+          urlsLength: selectedUrls.length,
+          socialLength: selectedSocial.length
+        });
+        
         if (selectedUrls.length === 0 && selectedSocial.length === 0) {
-          console.error('No URLs or social media selected');
+          console.error('No URLs or social media selected - redirecting to results');
           navigate('/results');
           return;
         }

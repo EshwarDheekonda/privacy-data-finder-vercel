@@ -33,24 +33,36 @@ export const ExtractDetailsSection = ({ searchQuery, allResults }: ExtractDetail
     try {
       const selectedResults = getSelectedResults(allResults);
       const selectedUrls = selectedResults.map(result => result.source);
+      
+      // Separate social media and regular URLs
+      const selectedSocial = selectedResults.filter(result => 
+        result.id.startsWith('social-') && !result.id.includes('webpage')
+      );
+      const regularUrls = selectedResults.filter(result => 
+        !result.id.startsWith('social-') || result.id.includes('webpage')
+      ).map(result => result.source);
 
       console.log('Extracting details for:', {
         searchQuery,
         selectedCount: selectedResults.length,
-        selectedUrls
+        selectedUrls,
+        selectedSocial,
+        regularUrls
       });
 
-      await searchApi.extractDetails(searchQuery, selectedUrls);
+      await searchApi.extractDetails(searchQuery, regularUrls, selectedSocial);
 
       toast({
         title: 'Analysis Complete',
         description: `Processing completed for ${selectedCount} selected result${selectedCount > 1 ? 's' : ''}.`,
       });
 
-      // Navigate to detailed results page
+      // Navigate to detailed results page with correct data structure
       navigate('/detailed-results', {
         state: {
           query: searchQuery,
+          selectedUrls: regularUrls,
+          selectedSocial: selectedSocial,
           selectedResults: selectedResults
         }
       });
