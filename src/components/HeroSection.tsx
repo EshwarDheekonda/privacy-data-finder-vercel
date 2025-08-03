@@ -7,7 +7,7 @@ import { searchApi, handleApiError, SearchResponse, SearchApiError } from '@/lib
 import { useCounter } from '@/contexts/CounterContext';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { ParticleSystem } from '@/components/ParticleSystem';
-import { RotatingShieldHero } from '@/components/RotatingShieldHero';
+import { Hero3D } from '@/components/Hero3D';
 import { useNavigate } from 'react-router-dom';
 import heroImage from '@/assets/hero-privacy.jpg';
 
@@ -96,10 +96,10 @@ export const HeroSection = () => {
         <div className="animate-depth-float absolute top-1/3 left-10 w-8 h-8 bg-danger/25 rounded-full opacity-30 blur-sm" style={{ animationDelay: '3s' }}></div>
       </div>
 
-      {/* Rotating Shield Hero Animation */}
+      {/* 3D Hero Animation */}
       {!showMainContent && (
-        <div className="absolute inset-0 z-50 bg-background/95">
-          <RotatingShieldHero onAnimationComplete={() => setShowMainContent(true)} />
+        <div className="absolute inset-0 z-50">
+          <Hero3D onAnimationComplete={() => setShowMainContent(true)} />
         </div>
       )}
 
