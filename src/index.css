@@ -2,73 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Modern PII Risk Assessment Tool Design System - Inspired by CrowdStrike, Okta */
+/* Advanced PII Risk Assessment Design System - Enhanced Color Grading */
 
 @layer base {
   :root {
-    /* Core Background & Surfaces */
-    --background: 210 24% 6%;
+    /* Advanced Color Temperature System */
+    --background: 210 24% 4%;
+    --background-warm: 215 20% 5%;
+    --background-cool: 205 28% 4%;
     --foreground: 210 20% 98%;
-    --surface: 210 20% 8%;
-    --surface-elevated: 210 18% 12%;
+    --surface: 210 20% 7%;
+    --surface-elevated: 210 18% 10%;
+    --surface-interactive: 210 16% 12%;
 
-    /* Glass Morphism */
-    --glass: 210 20% 15%;
-    --glass-border: 210 25% 25%;
-    --glass-glow: 264 69% 50%;
+    /* Enhanced Glass Morphism */
+    --glass: 210 20% 12%;
+    --glass-border: 210 30% 22%;
+    --glass-glow: 264 69% 55%;
+    --glass-overlay: 210 20% 8%;
 
-    /* Brand Colors - Security Theme */
-    --primary: 264 69% 50%;
+    /* Sophisticated Brand Palette */
+    --primary: 264 69% 52%;
     --primary-foreground: 210 20% 98%;
-    --primary-glow: 264 69% 70%;
-    --primary-dark: 264 69% 30%;
+    --primary-glow: 264 69% 68%;
+    --primary-dark: 264 69% 35%;
+    --primary-light: 264 69% 75%;
+    --primary-subtle: 264 30% 15%;
 
-    --secondary: 156 60% 45%;
+    --secondary: 156 65% 48%;
     --secondary-foreground: 210 20% 98%;
-    --secondary-glow: 156 60% 65%;
+    --secondary-glow: 156 65% 70%;
+    --secondary-dark: 156 65% 30%;
+    --secondary-subtle: 156 25% 12%;
 
-    /* Status Colors */
-    --success: 142 76% 36%;
+    /* Extended Status Palette */
+    --success: 142 76% 38%;
     --success-foreground: 210 20% 98%;
-    --warning: 45 93% 47%;
+    --success-glow: 142 76% 60%;
+    --success-subtle: 142 30% 12%;
+    
+    --warning: 45 93% 50%;
     --warning-foreground: 210 20% 98%;
-    --danger: 0 72% 51%;
+    --warning-glow: 45 93% 70%;
+    --warning-subtle: 45 35% 15%;
+    
+    --danger: 0 72% 53%;
     --danger-foreground: 210 20% 98%;
+    --danger-glow: 0 72% 70%;
+    --danger-subtle: 0 30% 12%;
 
-    /* UI Elements */
-    --card: 210 20% 10%;
+    --info: 207 90% 60%;
+    --info-foreground: 210 20% 98%;
+    --info-glow: 207 90% 75%;
+    --info-subtle: 207 30% 12%;
+
+    /* Enhanced UI Elements */
+    --card: 210 20% 8%;
     --card-foreground: 210 20% 98%;
-    --card-border: 210 25% 20%;
+    --card-border: 210 25% 18%;
+    --card-elevated: 210 18% 10%;
 
-    --input: 210 20% 12%;
-    --input-border: 210 25% 25%;
-    --input-focus: 264 69% 50%;
+    --input: 210 20% 10%;
+    --input-border: 210 25% 22%;
+    --input-focus: 264 69% 52%;
+    --input-background: 210 20% 8%;
 
-    --muted: 210 20% 15%;
-    --muted-foreground: 210 15% 60%;
+    --muted: 210 20% 13%;
+    --muted-foreground: 210 15% 65%;
 
-    --accent: 264 69% 50%;
+    --accent: 264 69% 52%;
     --accent-foreground: 210 20% 98%;
 
-    --border: 210 25% 20%;
-    --ring: 264 69% 50%;
+    --border: 210 25% 18%;
+    --ring: 264 69% 52%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(264 69% 50%), hsl(264 69% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(156 60% 45%), hsl(156 60% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 24% 6%), hsl(210 20% 8%));
-    --gradient-glass: linear-gradient(135deg, hsla(210, 20%, 15%, 0.8), hsla(210, 18%, 12%, 0.6));
-    --gradient-glow: radial-gradient(circle at center, hsla(264, 69%, 50%, 0.3), transparent 70%);
+    /* Advanced Gradient System */
+    --gradient-primary: linear-gradient(135deg, hsl(264 69% 52%), hsl(264 69% 68%));
+    --gradient-secondary: linear-gradient(135deg, hsl(156 65% 48%), hsl(156 65% 70%));
+    --gradient-hero: radial-gradient(ellipse at top, hsl(210 24% 4%), hsl(210 20% 7%));
+    --gradient-glass: linear-gradient(135deg, hsla(210, 20%, 12%, 0.9), hsla(210, 18%, 8%, 0.7));
+    --gradient-glow: radial-gradient(circle at center, hsla(264, 69%, 52%, 0.4), transparent 70%);
+    --gradient-warm: linear-gradient(135deg, hsl(215 20% 5%), hsl(220 18% 8%));
+    --gradient-cool: linear-gradient(135deg, hsl(205 28% 4%), hsl(200 25% 7%));
+    --gradient-depth: linear-gradient(180deg, transparent, hsla(210, 20%, 4%, 0.8));
 
-    /* Shadows & Glows */
-    --shadow-glass: 0 8px 32px hsla(210, 24%, 6%, 0.4);
-    --shadow-elevated: 0 20px 40px hsla(210, 24%, 6%, 0.6);
-    --glow-primary: 0 0 30px hsla(264, 69%, 50%, 0.4);
-    --glow-secondary: 0 0 30px hsla(156, 60%, 45%, 0.4);
+    /* Sophisticated Shadow System */
+    --shadow-glass: 0 8px 32px hsla(210, 24%, 4%, 0.6);
+    --shadow-elevated: 0 20px 40px hsla(210, 24%, 4%, 0.8);
+    --shadow-floating: 0 32px 64px hsla(210, 24%, 4%, 0.9);
+    --glow-primary: 0 0 40px hsla(264, 69%, 52%, 0.5);
+    --glow-secondary: 0 0 40px hsla(156, 65%, 48%, 0.5);
+    --glow-success: 0 0 30px hsla(142, 76%, 38%, 0.4);
+    --glow-warning: 0 0 30px hsla(45, 93%, 50%, 0.4);
+    --glow-danger: 0 0 30px hsla(0, 72%, 53%, 0.4);
 
-    /* Animations */
+    /* Enhanced Animation System */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-elastic: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    --transition-quick: all 0.15s ease-out;
 
     --radius: 0.75rem;
 
@@ -159,24 +191,75 @@
 }
 
 @layer components {
-  /* Glass Morphism Components */
+  /* Enhanced Glass Morphism Components */
   .glass-card {
     @apply backdrop-blur-xl border;
     background: var(--gradient-glass);
     border-color: hsl(var(--glass-border));
     box-shadow: var(--shadow-glass);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary-glow)), transparent);
+    opacity: 0.6;
   }
 
   .glass-button {
-    @apply glass-card px-6 py-3 text-sm font-medium transition-all duration-300;
-    @apply hover:shadow-lg hover:scale-105 active:scale-95;
+    @apply glass-card px-6 py-3 text-sm font-medium;
+    transition: var(--transition-smooth);
+    @apply hover:scale-105 active:scale-95;
   }
 
   .glass-button:hover {
     box-shadow: var(--glow-primary);
+    border-color: hsl(var(--primary-glow));
   }
 
-  /* Animation Classes */
+  /* Enhanced Interactive Elements */
+  .glass-nav {
+    @apply backdrop-blur-xl border-b;
+    background: linear-gradient(135deg, hsla(210, 20%, 8%, 0.95), hsla(210, 18%, 6%, 0.9));
+    border-color: hsl(var(--glass-border));
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .depth-card {
+    @apply glass-card;
+    background: linear-gradient(135deg, hsl(var(--surface-elevated)), hsl(var(--surface)));
+    box-shadow: var(--shadow-floating);
+  }
+
+  .interactive-glow {
+    transition: var(--transition-smooth);
+    position: relative;
+  }
+
+  .interactive-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(var(--primary-glow)), transparent, hsl(var(--secondary-glow)));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: subtract;
+    opacity: 0;
+    transition: var(--transition-smooth);
+  }
+
+  .interactive-glow:hover::after {
+    opacity: 0.8;
+  }
+
+  /* Enhanced Animation Classes */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -195,6 +278,18 @@
 
   .animate-scale-in {
     animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+
+  .animate-depth-float {
+    animation: depthFloat 8s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2.5s linear infinite;
   }
 
   /* Gradient Text */
@@ -298,4 +393,36 @@
 @keyframes pulse {
   0%, 100% { opacity: 0.3; }
   50% { opacity: 0.6; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { 
+    box-shadow: var(--glow-primary);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 60px hsla(264, 69%, 52%, 0.8);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes depthFloat {
+  0%, 100% { 
+    transform: translateY(0px) rotateX(0deg);
+  }
+  33% { 
+    transform: translateY(-10px) rotateX(1deg);
+  }
+  66% { 
+    transform: translateY(-5px) rotateX(-1deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

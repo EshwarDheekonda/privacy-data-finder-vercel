@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { searchApi, handleApiError, SearchResponse, SearchApiError } from '@/lib/api';
 import { useCounter } from '@/contexts/CounterContext';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
+import { ParticleSystem } from '@/components/ParticleSystem';
 import { useNavigate } from 'react-router-dom';
 import heroImage from '@/assets/hero-privacy.jpg';
 
@@ -61,103 +62,131 @@ export const HeroSection = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center particles-bg overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 opacity-20">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      {/* Enhanced Background with Parallax */}
+      <div className="absolute inset-0 opacity-15">
         <img 
           src={heroImage} 
           alt="Privacy Protection" 
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover scale-110 animate-pulse-glow"
         />
+        <div className="absolute inset-0 bg-gradient-depth"></div>
       </div>
+
+      {/* Particle System */}
+      <ParticleSystem 
+        className="opacity-60" 
+        particleCount={80}
+        colors={[
+          'rgba(138, 113, 255, 0.4)',
+          'rgba(72, 187, 120, 0.3)', 
+          'rgba(56, 178, 172, 0.3)',
+          'rgba(96, 165, 250, 0.2)'
+        ]}
+      />
       
-      {/* Floating Elements */}
+      {/* Enhanced Floating Elements */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="animate-float absolute top-20 left-20 w-16 h-16 bg-gradient-primary rounded-full opacity-30 blur-sm"></div>
-        <div className="animate-float absolute top-40 right-32 w-12 h-12 bg-gradient-secondary rounded-full opacity-40 blur-sm" style={{ animationDelay: '2s' }}></div>
-        <div className="animate-float absolute bottom-32 left-1/4 w-20 h-20 bg-primary/20 rounded-full opacity-25 blur-sm" style={{ animationDelay: '4s' }}></div>
-        <div className="animate-float absolute bottom-20 right-20 w-14 h-14 bg-secondary/30 rounded-full opacity-35 blur-sm" style={{ animationDelay: '1s' }}></div>
+        <div className="animate-depth-float absolute top-20 left-20 w-16 h-16 bg-gradient-primary rounded-full opacity-40 blur-sm glow-primary"></div>
+        <div className="animate-depth-float absolute top-40 right-32 w-12 h-12 bg-gradient-secondary rounded-full opacity-50 blur-sm glow-secondary" style={{ animationDelay: '2s' }}></div>
+        <div className="animate-depth-float absolute bottom-32 left-1/4 w-20 h-20 bg-info/30 rounded-full opacity-35 blur-sm" style={{ animationDelay: '4s' }}></div>
+        <div className="animate-depth-float absolute bottom-20 right-20 w-14 h-14 bg-warning/30 rounded-full opacity-45 blur-sm" style={{ animationDelay: '1s' }}></div>
+        <div className="animate-depth-float absolute top-1/3 left-10 w-8 h-8 bg-danger/25 rounded-full opacity-30 blur-sm" style={{ animationDelay: '3s' }}></div>
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 text-center">
         <div className="animate-slide-up">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 glass-card px-4 py-2 mb-8 text-sm font-medium">
-            <Shield className="w-4 h-4 text-secondary" />
-            <span className="text-muted-foreground">Enterprise-Grade Privacy Assessment</span>
+          {/* Enhanced Badge */}
+          <div className="inline-flex items-center gap-2 depth-card px-6 py-3 mb-8 text-sm font-medium interactive-glow">
+            <Shield className="w-5 h-5 text-secondary animate-pulse-glow" />
+            <span className="text-foreground">Enterprise-Grade Privacy Assessment</span>
+            <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-            <span className="gradient-text">Discover Your</span><br />
-            <span className="text-foreground">Digital Footprint</span><br />
-            <span className="text-secondary">& Privacy Risk</span>
+          {/* Enhanced Headline */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
+            <span className="gradient-text animate-shimmer bg-gradient-to-r from-primary via-primary-light to-primary bg-[length:200%_auto] bg-clip-text text-transparent">
+              Discover Your
+            </span><br />
+            <span className="text-foreground animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              Digital Footprint
+            </span><br />
+            <span className="text-secondary animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              & Privacy Risk
+            </span>
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-            Advanced PII scanning and risk assessment to protect your digital identity. 
-            Discover what personal information is exposed online and get actionable privacy recommendations.
+          {/* Enhanced Subheadline */}
+          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.6s' }}>
+            Advanced PII scanning and risk assessment powered by AI to protect your digital identity. 
+            Discover what personal information is exposed online and get actionable privacy recommendations 
+            from our enterprise-grade security platform.
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="glass-card p-2 flex gap-2">
+          {/* Enhanced Search Bar */}
+          <div className="max-w-3xl mx-auto mb-12 animate-scale-in" style={{ animationDelay: '0.8s' }}>
+            <div className="depth-card p-3 flex gap-3 interactive-glow">
               <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-6 h-6" />
                 <Input
-                  placeholder="Enter a name to assess privacy risk..."
+                  placeholder="Enter a full name to assess privacy risk..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 bg-transparent border-none text-lg h-14 focus:ring-0"
+                  className="pl-14 bg-surface-interactive border-none text-lg h-16 focus:ring-2 focus:ring-primary-glow rounded-lg"
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
               </div>
                <Button 
                 onClick={handleSearch}
-                className="bg-gradient-primary hover:scale-105 transition-all duration-300 h-14 px-8 text-lg font-semibold"
+                className="bg-gradient-primary hover:bg-gradient-to-r hover:from-primary-dark hover:to-primary-light hover:scale-105 transition-all duration-300 h-16 px-10 text-lg font-semibold rounded-lg glow-primary"
                 disabled={!searchQuery.trim() || isLoading}
               >
                 {isLoading ? (
-                  <Loader className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader className="w-6 h-6 mr-3 animate-spin" />
                 ) : (
-                  <Zap className="w-5 h-5 mr-2" />
+                  <Zap className="w-6 h-6 mr-3" />
                 )}
                 {isLoading ? 'Scanning...' : 'Start Assessment'}
               </Button>
             </div>
           </div>
 
-          {/* Loading Status */}
+          {/* Enhanced Loading Status */}
           {isLoading && loadingMessage && (
-            <div className="mt-4 p-4 glass-card max-w-md mx-auto">
-              <div className="flex items-center justify-center gap-3">
-                <Loader className="w-4 h-4 animate-spin text-secondary" />
-                <span className="text-muted-foreground text-sm">{loadingMessage}</span>
+            <div className="mt-6 p-6 depth-card max-w-lg mx-auto animate-pulse-glow">
+              <div className="flex items-center justify-center gap-4 mb-3">
+                <div className="relative">
+                  <Loader className="w-6 h-6 animate-spin text-secondary" />
+                  <div className="absolute inset-0 w-6 h-6 border-2 border-secondary/20 rounded-full animate-ping"></div>
+                </div>
+                <span className="text-foreground font-medium">{loadingMessage}</span>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground text-center">
-                This may take up to 3 minutes for comprehensive scanning
+              <div className="w-full bg-surface-elevated rounded-full h-2 mb-2">
+                <div className="bg-gradient-primary h-2 rounded-full animate-shimmer bg-[length:200%_auto]" style={{ width: '60%' }}></div>
+              </div>
+              <div className="text-sm text-muted-foreground text-center">
+                Comprehensive scanning may take up to 3 minutes for thorough analysis
               </div>
             </div>
           )}
 
-          {/* Quick Stats */}
-          <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-secondary" />
+          {/* Enhanced Quick Stats */}
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8 text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '1s' }}>
+            <div className="flex items-center gap-2 glass-card px-3 py-2 rounded-full">
+              <Eye className="w-4 h-4 text-info animate-pulse" />
               <span>Real-time scanning</span>
             </div>
-            <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-primary" />
-              <span>No data stored</span>
+            <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+            <div className="flex items-center gap-2 glass-card px-3 py-2 rounded-full">
+              <Shield className="w-4 h-4 text-success animate-pulse" />
+              <span>Zero data retention</span>
             </div>
-            <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-            <div className="flex items-center gap-2">
+            <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+            <div className="flex items-center gap-2 glass-card px-3 py-2 rounded-full">
               <AnimatedCounter 
                 value={count} 
-                className="font-semibold text-foreground gradient-text" 
+                className="font-bold text-foreground gradient-text text-lg" 
               />
               <span>assessments completed</span>
             </div>

@@ -26,33 +26,51 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				surface: 'hsl(var(--surface))',
 				'surface-elevated': 'hsl(var(--surface-elevated))',
+				'surface-interactive': 'hsl(var(--surface-interactive))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
 					glow: 'hsl(var(--primary-glow))',
-					dark: 'hsl(var(--primary-dark))'
+					dark: 'hsl(var(--primary-dark))',
+					light: 'hsl(var(--primary-light))',
+					subtle: 'hsl(var(--primary-subtle))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))',
-					glow: 'hsl(var(--secondary-glow))'
+					glow: 'hsl(var(--secondary-glow))',
+					dark: 'hsl(var(--secondary-dark))',
+					subtle: 'hsl(var(--secondary-subtle))'
 				},
 				success: {
 					DEFAULT: 'hsl(var(--success))',
-					foreground: 'hsl(var(--success-foreground))'
+					foreground: 'hsl(var(--success-foreground))',
+					glow: 'hsl(var(--success-glow))',
+					subtle: 'hsl(var(--success-subtle))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
-					foreground: 'hsl(var(--warning-foreground))'
+					foreground: 'hsl(var(--warning-foreground))',
+					glow: 'hsl(var(--warning-glow))',
+					subtle: 'hsl(var(--warning-subtle))'
 				},
 				danger: {
 					DEFAULT: 'hsl(var(--danger))',
-					foreground: 'hsl(var(--danger-foreground))'
+					foreground: 'hsl(var(--danger-foreground))',
+					glow: 'hsl(var(--danger-glow))',
+					subtle: 'hsl(var(--danger-subtle))'
+				},
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))',
+					glow: 'hsl(var(--info-glow))',
+					subtle: 'hsl(var(--info-subtle))'
 				},
 				glass: {
 					DEFAULT: 'hsl(var(--glass))',
 					border: 'hsl(var(--glass-border))',
-					glow: 'hsl(var(--glass-glow))'
+					glow: 'hsl(var(--glass-glow))',
+					overlay: 'hsl(var(--glass-overlay))'
 				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
@@ -87,13 +105,20 @@ export default {
 				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-hero': 'var(--gradient-hero)',
 				'gradient-glass': 'var(--gradient-glass)',
-				'gradient-glow': 'var(--gradient-glow)'
+				'gradient-glow': 'var(--gradient-glow)',
+				'gradient-warm': 'var(--gradient-warm)',
+				'gradient-cool': 'var(--gradient-cool)',
+				'gradient-depth': 'var(--gradient-depth)'
 			},
 			boxShadow: {
 				'glass': 'var(--shadow-glass)',
 				'elevated': 'var(--shadow-elevated)',
+				'floating': 'var(--shadow-floating)',
 				'glow-primary': 'var(--glow-primary)',
-				'glow-secondary': 'var(--glow-secondary)'
+				'glow-secondary': 'var(--glow-secondary)',
+				'glow-success': 'var(--glow-success)',
+				'glow-warning': 'var(--glow-warning)',
+				'glow-danger': 'var(--glow-danger)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
