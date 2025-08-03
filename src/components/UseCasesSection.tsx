@@ -66,7 +66,7 @@ export const UseCasesSection = () => {
   ];
 
   return (
-    <section className="py-20 px-6 bg-surface/30">
+    <section id="use-cases" className="py-20 px-6 bg-surface/30">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">

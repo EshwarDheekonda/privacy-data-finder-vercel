@@ -23,7 +23,7 @@ export const HowItWorksSection = () => {
   ];
 
   return (
-    <section className="py-20 px-6 bg-surface/50">
+    <section id="how-it-works" className="py-20 px-6 bg-surface/50">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
