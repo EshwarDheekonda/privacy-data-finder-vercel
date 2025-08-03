@@ -1,6 +1,6 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, MeshDistortMaterial, Sphere } from '@react-three/drei';
+import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface AnimatedShieldProps {
@@ -11,29 +11,6 @@ export const AnimatedShield = ({ phase }: AnimatedShieldProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const shieldRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
-
-  // Shield geometry - custom shield shape
-  const shieldGeometry = useMemo(() => {
-    const shape = new THREE.Shape();
-    
-    // Create shield shape path
-    shape.moveTo(0, 1.5);
-    shape.bezierCurveTo(-0.8, 1.2, -1.2, 0.5, -1.2, -0.2);
-    shape.bezierCurveTo(-1.2, -0.8, -0.8, -1.5, 0, -2);
-    shape.bezierCurveTo(0.8, -1.5, 1.2, -0.8, 1.2, -0.2);
-    shape.bezierCurveTo(1.2, 0.5, 0.8, 1.2, 0, 1.5);
-
-    const extrudeSettings = {
-      depth: 0.2,
-      bevelEnabled: true,
-      bevelSegments: 8,
-      steps: 2,
-      bevelSize: 0.05,
-      bevelThickness: 0.02
-    };
-
-    return new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  }, []);
 
   useFrame((state) => {
     if (!groupRef.current || !shieldRef.current || !glowRef.current) return;
@@ -84,53 +61,46 @@ export const AnimatedShield = ({ phase }: AnimatedShieldProps) => {
 
   return (
     <group ref={groupRef}>
-      {/* Main Shield */}
-      <mesh ref={shieldRef} geometry={shieldGeometry} position={[0, 0, 0]}>
-        <MeshDistortMaterial
+      {/* Main Shield - Using simple cylinder geometry */}
+      <mesh ref={shieldRef} position={[0, 0, 0]} rotation={[0, 0, 0]}>
+        <cylinderGeometry args={[1.2, 0.8, 0.3, 8]} />
+        <meshStandardMaterial
           color={shieldColor}
-          metalness={0.8}
-          roughness={0.2}
-          distort={0.1}
-          speed={2}
+          metalness={0.6}
+          roughness={0.3}
           emissive={shieldColor}
-          emissiveIntensity={0.2}
+          emissiveIntensity={0.1}
         />
       </mesh>
 
       {/* Glow Effect */}
       <mesh ref={glowRef} position={[0, 0, -0.1]}>
-        <sphereGeometry args={[2, 32, 32]} />
+        <sphereGeometry args={[1.8, 16, 16]} />
         <meshBasicMaterial
           color={glowColor}
           transparent
-          opacity={0.1}
+          opacity={0.08}
           side={THREE.BackSide}
         />
       </mesh>
 
       {/* Inner Core */}
-      <Sphere args={[0.3]} position={[0, 0, 0.15]}>
+      <Sphere args={[0.25]} position={[0, 0, 0.2]}>
         <meshStandardMaterial
           color="#ffffff"
           emissive="#60a5fa"
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.3}
           transparent
-          opacity={0.8}
+          opacity={0.9}
         />
       </Sphere>
 
-      {/* Privacy Symbol (Lock Icon) */}
+      {/* Privacy Symbol - Simple text without custom font */}
       {phase !== 'intro' && (
-        <Text
-          position={[0, 0, 0.25]}
-          fontSize={0.4}
-          color="#ffffff"
-          anchorX="center"
-          anchorY="middle"
-          font="/fonts/inter-bold.woff"
-        >
-          🔒
-        </Text>
+        <mesh position={[0, 0, 0.35]}>
+          <sphereGeometry args={[0.15, 8, 8]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
       )}
     </group>
   );

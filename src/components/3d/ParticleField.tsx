@@ -10,13 +10,16 @@ interface ParticleFieldProps {
 export const ParticleField = ({ phase }: ParticleFieldProps) => {
   const pointsRef = useRef<THREE.Points>(null);
 
+  // Reduced particle count for better performance
+  const PARTICLE_COUNT = 200;
+
   // Generate particle positions
   const particlePositions = useMemo(() => {
-    const positions = new Float32Array(3000);
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
     
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
       // Create particles in a sphere around the center
-      const radius = 8 + Math.random() * 12;
+      const radius = 6 + Math.random() * 8;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.random() * Math.PI;
       
@@ -64,17 +67,17 @@ export const ParticleField = ({ phase }: ParticleFieldProps) => {
   });
 
   const particleColor = phase === 'intro' ? '#64748b' : '#3b82f6';
-  const particleSize = phase === 'text-appear' ? 0.03 : 0.02;
+  const particleSize = phase === 'text-appear' ? 0.025 : 0.015;
 
   return (
-    <Points ref={pointsRef} positions={particlePositions} stride={3} frustumCulled={false}>
+    <Points ref={pointsRef} positions={particlePositions} stride={3} frustumCulled>
       <PointMaterial
         transparent
         color={particleColor}
         size={particleSize}
         sizeAttenuation={true}
         depthWrite={false}
-        opacity={0.6}
+        opacity={0.4}
         blending={THREE.AdditiveBlending}
       />
     </Points>
