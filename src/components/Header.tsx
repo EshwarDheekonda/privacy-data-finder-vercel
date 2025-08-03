@@ -80,12 +80,12 @@ export const Header: React.FC = () => {
               <User className="h-4 w-4 mr-2" />
               Sign In
             </Button>
-            <Button 
-              size="sm"
-              className="bg-primary hover:bg-primary-dark glow-primary"
+            <a 
+              href="#assessment"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90 glow-primary transition-colors"
             >
               Get Started
-            </Button>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -128,12 +128,12 @@ export const Header: React.FC = () => {
                   <User className="h-4 w-4 mr-2" />
                   Sign In
                 </Button>
-                <Button 
-                  size="sm"
-                  className="bg-primary hover:bg-primary-dark glow-primary justify-center"
+                <a 
+                  href="#assessment"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90 glow-primary justify-center transition-colors"
                 >
                   Get Started
-                </Button>
+                </a>
               </div>
             </nav>
           </div>

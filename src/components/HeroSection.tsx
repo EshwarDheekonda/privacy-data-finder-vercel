@@ -134,7 +134,7 @@ export const HeroSection = () => {
           </p>
 
           {/* Enhanced Search Bar */}
-          <div className="max-w-3xl mx-auto mb-12 animate-scale-in" style={{ animationDelay: '0.8s' }}>
+          <div id="assessment" className="max-w-3xl mx-auto mb-12 animate-scale-in" style={{ animationDelay: '0.8s' }}>
             <div className="depth-card p-3 flex gap-3 interactive-glow">
               <div className="flex-1 relative">
                 <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-muted-foreground w-6 h-6" />
