@@ -273,11 +273,11 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
           <div className="max-w-lg mx-auto mb-12 animate-scale-in relative z-30" style={{ animationDelay: '1s' }}>
             <Button 
               onClick={handleSearch}
-              variant="ghost"
-              className="vibrant-button w-full h-16 px-10 text-lg font-bold rounded-lg text-white transition-all duration-500 ease-out transform hover:scale-105 hover:shadow-xl hover:shadow-purple-500/30 active:scale-95 group/button relative overflow-hidden"
+              variant="bright-white"
+              className="w-full h-16 px-10 text-lg font-bold rounded-lg transition-all duration-500 ease-out transform active:scale-95 group/button relative overflow-hidden"
               disabled={!searchQuery.trim() || isLoading}
-              style={{ 
-                textShadow: '0 2px 8px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.3)',
+              style={{
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
               }}
               aria-label={isLoading ? 'Scanning in progress' : 'Start privacy risk assessment'}
               role="button"
@@ -288,17 +288,17 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
               
               {isLoading ? (
                 <div className="flex items-center justify-center relative z-10">
-                  <Loader className="w-6 h-6 mr-3 animate-spin text-white drop-shadow-lg" />
-                  <span className="animate-pulse font-semibold text-white" style={{ textShadow: '0 0 15px rgba(255, 255, 255, 0.8)' }}>
+                  <Loader className="w-6 h-6 mr-3 animate-spin text-black drop-shadow-lg" />
+                  <span className="animate-pulse font-semibold text-black" style={{ textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' }}>
                     Scanning...
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center relative z-10">
-                  <Zap className="w-6 h-6 mr-3 text-white transition-all duration-300 group-hover/button:animate-bounce group-hover/button:text-yellow-200 group-hover/button:drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" />
-                  <span className="group-hover/button:tracking-wide transition-all duration-300 font-bold text-white" 
+                  <Zap className="w-6 h-6 mr-3 text-black transition-all duration-300 group-hover/button:animate-bounce group-hover/button:text-gray-800" />
+                  <span className="group-hover/button:tracking-wide transition-all duration-300 font-bold text-black" 
                         style={{ 
-                          textShadow: '0 2px 8px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.5), 0 0 30px rgba(255, 255, 255, 0.3)'
+                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                         }}>
                     ⚡ Start Assessment
                   </span>
