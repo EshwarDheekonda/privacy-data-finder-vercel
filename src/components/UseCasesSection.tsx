@@ -159,12 +159,9 @@ export const UseCasesSection = () => {
             <p className="text-muted-foreground mb-6">
               Join thousands of users who trust our platform to protect their digital privacy and manage online risks.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex justify-center">
               <button className="glass-button bg-gradient-primary text-white font-semibold">
                 Start Free Assessment
-              </button>
-              <button className="glass-button text-foreground hover:text-primary">
-                Schedule Demo
               </button>
             </div>
           </div>
