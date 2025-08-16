@@ -21,7 +21,7 @@ const Index = () => {
       <TrustSection />
       <HowItWorksSection />
       <FeaturesSection />
-      <UseCasesSection />
+      <UseCasesSection onGetStartedClick={handleGetStartedClick} />
       <FooterSection />
     </div>
   );

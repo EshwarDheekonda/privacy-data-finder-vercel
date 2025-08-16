@@ -1,6 +1,10 @@
 import { User, Briefcase, Shield, Search, Users, Eye } from 'lucide-react';
 
-export const UseCasesSection = () => {
+interface UseCasesSectionProps {
+  onGetStartedClick?: () => void;
+}
+
+export const UseCasesSection = ({ onGetStartedClick }: UseCasesSectionProps) => {
   const useCases = [
     {
       icon: User,
@@ -160,7 +164,10 @@ export const UseCasesSection = () => {
               Join thousands of users who trust our platform to protect their digital privacy and manage online risks.
             </p>
             <div className="flex justify-center">
-              <button className="glass-button bg-gradient-primary text-white font-semibold">
+              <button 
+                onClick={onGetStartedClick}
+                className="glass-button bg-gradient-primary text-white font-semibold"
+              >
                 Start Free Assessment
               </button>
             </div>
