@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,18 @@ export const ProtectedResults = ({ children, searchQuery, resultsCount }: Protec
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Store search results in localStorage for persistence during auth flow
+  React.useEffect(() => {
+    if (!user && location.state?.searchResponse) {
+      localStorage.setItem('pendingSearchResults', JSON.stringify(location.state.searchResponse));
+    }
+  }, [user, location.state]);
+
+  // Debug auth state
+  React.useEffect(() => {
+    console.log('ProtectedResults Auth State:', { user: !!user, loading });
+  }, [user, loading]);
+
   // Show loading state while auth is being determined
   if (loading) {
     return (
@@ -32,7 +44,12 @@ export const ProtectedResults = ({ children, searchQuery, resultsCount }: Protec
 
   const handleSignUp = () => {
     const currentPath = location.pathname + location.search;
-    navigate(`/auth?redirectTo=${encodeURIComponent(currentPath)}`);
+    navigate(`/auth?redirectTo=${encodeURIComponent(currentPath)}&tab=signup`);
+  };
+
+  const handleSignIn = () => {
+    const currentPath = location.pathname + location.search;
+    navigate(`/auth?redirectTo=${encodeURIComponent(currentPath)}&tab=signin`);
   };
 
   return (
@@ -67,8 +84,8 @@ export const ProtectedResults = ({ children, searchQuery, resultsCount }: Protec
         </div>
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <Card className="glass-card max-w-md mx-4 border-primary/30">
+        <div className="fixed inset-0 bg-background/90 backdrop-blur-md flex items-center justify-center z-50">
+          <Card className="glass-card max-w-md mx-4 border-primary/30 shadow-2xl">
             <CardHeader className="text-center">
               <div className="mx-auto h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
                 <Lock className="h-8 w-8 text-primary" />
@@ -107,23 +124,28 @@ export const ProtectedResults = ({ children, searchQuery, resultsCount }: Protec
                 </div>
               </div>
               
-              <Button 
-                onClick={handleSignUp}
-                className="w-full"
-                size="lg"
-              >
-                Create Free Account
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="space-y-3">
+                <Button 
+                  onClick={handleSignUp}
+                  className="w-full"
+                  size="lg"
+                >
+                  Create Free Account
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                
+                <Button 
+                  onClick={handleSignIn}
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                >
+                  Sign In to Existing Account
+                </Button>
+              </div>
               
               <p className="text-xs text-center text-muted-foreground">
-                Already have an account?{' '}
-                <button 
-                  onClick={handleSignUp}
-                  className="text-primary hover:underline"
-                >
-                  Sign in here
-                </button>
+                Free forever • No credit card required
               </p>
             </CardContent>
           </Card>

@@ -160,10 +160,29 @@ export default function Auth() {
     }
   }, [showVerificationBanner, resendTimer]);
 
+  // Set active tab from URL params
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'signup' || tab === 'signin') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
       const redirectTo = searchParams.get('redirectTo') || '/';
+      
+      // If redirecting to results page, restore search results from localStorage
+      if (redirectTo.includes('/results')) {
+        const pendingResults = localStorage.getItem('pendingSearchResults');
+        if (pendingResults) {
+          localStorage.removeItem('pendingSearchResults');
+          navigate(redirectTo, { state: { searchResponse: JSON.parse(pendingResults) } });
+          return;
+        }
+      }
+      
       navigate(redirectTo);
     }
   }, [user, navigate, searchParams]);
