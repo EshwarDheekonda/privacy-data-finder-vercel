@@ -5,8 +5,7 @@ export const FooterSection = () => {
     product: [
       { name: "Features", href: "#features" },
       { name: "How it Works", href: "#how-it-works" },
-      { name: "Pricing", href: "#pricing" },
-      { name: "API Docs", href: "#api" }
+      { name: "Use Cases", href: "#use-cases" }
     ],
     company: [
       { name: "About Us", href: "#about" },
