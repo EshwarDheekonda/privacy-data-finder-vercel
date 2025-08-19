@@ -53,16 +53,10 @@ export const FooterSection = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4" />
-                <span>contact@privacyguard.com</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4" />
-                <span>+1 (555) 123-4567</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
+                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-semibold text-primary">UA</span>
+                </div>
+                <span>Research and Developed by professionals of University of Arkansas at Little Rock</span>
               </div>
             </div>
           </div>
