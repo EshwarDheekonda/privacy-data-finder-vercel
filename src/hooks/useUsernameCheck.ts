@@ -19,19 +19,26 @@ export const useUsernameCheck = (username: string) => {
       setError(null);
 
       try {
+        console.log('Checking username:', username);
         const { data, error } = await supabase
           .from('profiles')
           .select('username')
           .eq('username', username)
           .maybeSingle();
 
+        console.log('Username check result:', { data, error, username });
+
         if (error) {
+          console.error('Username check error:', error);
           setError('Failed to check username availability');
           setIsAvailable(null);
         } else {
-          setIsAvailable(!data);
+          const available = !data;
+          console.log('Username available:', available);
+          setIsAvailable(available);
         }
       } catch (err) {
+        console.error('Username check exception:', err);
         setError('Failed to check username availability');
         setIsAvailable(null);
       } finally {

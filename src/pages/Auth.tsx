@@ -468,10 +468,12 @@ export default function Auth() {
                             {field.value && field.value.length >= 3 && (
                               <>
                                 {isAvailable === false && (
-                                  <p className="text-xs text-destructive flex items-center gap-1">
-                                    <AlertCircle className="h-3 w-3" />
-                                    Username already taken. Try another one.
-                                  </p>
+                                  <div className="p-2 bg-red-50 border border-red-200 rounded-md">
+                                    <p className="text-xs text-red-700 flex items-center gap-1 font-medium">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Username already exists. Try another username.
+                                    </p>
+                                  </div>
                                 )}
                                 {isAvailable === true && (
                                   <p className="text-xs text-green-600 flex items-center gap-1">
