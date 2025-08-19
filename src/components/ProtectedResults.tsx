@@ -13,9 +13,18 @@ interface ProtectedResultsProps {
 }
 
 export const ProtectedResults = ({ children, searchQuery, resultsCount }: ProtectedResultsProps) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Show loading state while auth is being determined
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (user) {
     return <>{children}</>;
