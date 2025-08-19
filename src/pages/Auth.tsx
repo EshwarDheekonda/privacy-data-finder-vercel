@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useUsernameCheck } from '@/hooks/useUsernameCheck';
 import { useEmailCheck } from '@/hooks/useEmailCheck';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -14,9 +15,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, RotateCcw, AlertCircle, Check, Info } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, RotateCcw, AlertCircle, Check, Info, KeyRound } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -42,6 +44,9 @@ export default function Auth() {
   const [resendTimer, setResendTimer] = useState(300); // 5 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const [activeTab, setActiveTab] = useState('signin'); // Add state for active tab
   const { user, signUp, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
@@ -216,6 +221,47 @@ export default function Auth() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) {
+      toast({
+        title: 'Email required',
+        description: 'Please enter your email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingReset(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        toast({
+          title: 'Reset failed',
+          description: error.message || 'Failed to send password reset email.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Password reset email sent!',
+          description: 'Check your email for the password reset link.',
+        });
+        setShowForgotPassword(false);
+        setForgotPasswordEmail('');
+      }
+    } catch (error) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -387,6 +433,17 @@ export default function Auth() {
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Sign In
                     </Button>
+
+                    <div className="text-center">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="text-sm text-muted-foreground hover:text-primary"
+                        onClick={() => setShowForgotPassword(true)}
+                      >
+                        Forgot your password?
+                      </Button>
+                    </div>
                   </form>
                 </Form>
               </TabsContent>
@@ -581,6 +638,74 @@ export default function Auth() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Forgot Password Modal */}
+      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              Reset Password
+            </DialogTitle>
+            <DialogDescription>
+              Enter your email address and we'll send you a link to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="forgot-email" className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email Address
+              </Label>
+              <Input
+                id="forgot-email"
+                type="email"
+                placeholder="Enter your email"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleForgotPassword();
+                  }
+                }}
+              />
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <Button 
+                onClick={handleForgotPassword} 
+                disabled={isSendingReset || !forgotPasswordEmail}
+                className="w-full"
+              >
+                {isSendingReset ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send Reset Link
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotPasswordEmail('');
+                }}
+                className="w-full"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
