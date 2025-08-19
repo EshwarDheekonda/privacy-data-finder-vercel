@@ -47,6 +47,9 @@ export default function Auth() {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [activeTab, setActiveTab] = useState('signin'); // Add state for active tab
   const { user, signUp, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
@@ -70,6 +73,9 @@ export default function Auth() {
   // Email availability check
   const currentEmail = signUpForm.watch('email');
   const { isChecking: isCheckingEmail, emailExists, error: emailError } = useEmailCheck(currentEmail);
+
+  // Check if this is a password reset flow
+  const isPasswordReset = searchParams.get('reset') === 'true';
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -262,6 +268,65 @@ export default function Auth() {
     }
   };
 
+  const handlePasswordReset = async () => {
+    if (!newPassword) {
+      toast({
+        title: 'Password required',
+        description: 'Please enter a new password.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please make sure both passwords are the same.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast({
+          title: 'Password reset failed',
+          description: error.message || 'Failed to reset password.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Password reset successful!',
+          description: 'Your password has been updated. You can now sign in with your new password.',
+        });
+        // Redirect to sign in
+        navigate('/auth');
+      }
+    } catch (error) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -290,6 +355,91 @@ export default function Auth() {
       setIsGoogleLoading(false);
     }
   };
+
+  // Show password reset form if reset=true in URL
+  if (isPasswordReset) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        
+        <main className="container mx-auto px-4 pt-24 pb-8 max-w-md">
+          <Card className="glass-card border-primary/20">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Reset Your Password
+              </CardTitle>
+              <CardDescription>
+                Enter your new password below
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password" className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  New Password
+                </Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password" className="flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handlePasswordReset();
+                    }
+                  }}
+                />
+              </div>
+              
+              <Button 
+                onClick={handlePasswordReset} 
+                disabled={isResettingPassword || !newPassword || !confirmPassword}
+                className="w-full"
+              >
+                {isResettingPassword ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating Password...
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Update Password
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/auth')}
+                className="w-full"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign In
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   if (showVerificationBanner) {
     return (
