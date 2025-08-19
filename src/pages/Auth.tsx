@@ -76,6 +76,46 @@ export default function Auth() {
 
   // Check if this is a password reset flow
   const isPasswordReset = searchParams.get('reset') === 'true';
+  const accessToken = searchParams.get('access_token');
+  const refreshToken = searchParams.get('refresh_token');
+  const type = searchParams.get('type');
+
+  // Handle auth tokens from password reset email
+  useEffect(() => {
+    const handleAuthTokens = async () => {
+      if (type === 'recovery' && accessToken && refreshToken) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) {
+            console.error('Session setup error:', error);
+            toast({
+              title: 'Reset link invalid',
+              description: 'The password reset link is invalid or has expired. Please request a new one.',
+              variant: 'destructive',
+            });
+            navigate('/auth');
+          } else {
+            console.log('Session established for password reset:', data);
+            // The session is now established, user can reset password
+          }
+        } catch (error) {
+          console.error('Auth token handling error:', error);
+          toast({
+            title: 'Reset link error',
+            description: 'There was an error processing the reset link. Please try again.',
+            variant: 'destructive',
+          });
+          navigate('/auth');
+        }
+      }
+    };
+
+    handleAuthTokens();
+  }, [type, accessToken, refreshToken, navigate, toast]);
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
@@ -240,7 +280,7 @@ export default function Auth() {
     setIsSendingReset(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+        redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) {
@@ -356,8 +396,8 @@ export default function Auth() {
     }
   };
 
-  // Show password reset form if reset=true in URL
-  if (isPasswordReset) {
+  // Show password reset form if reset=true in URL or if we have recovery tokens
+  if (isPasswordReset || type === 'recovery') {
     return (
       <div className="min-h-screen bg-background">
         <Header />
