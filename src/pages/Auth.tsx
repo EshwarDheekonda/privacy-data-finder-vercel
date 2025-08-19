@@ -42,6 +42,7 @@ export default function Auth() {
   const [resendTimer, setResendTimer] = useState(300); // 5 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [activeTab, setActiveTab] = useState('signin'); // Add state for active tab
   const { user, signUp, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -339,7 +340,7 @@ export default function Auth() {
           </CardHeader>
           
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -536,10 +537,10 @@ export default function Auth() {
                         className="w-full" 
                         onClick={() => {
                           // Switch to sign in tab and clear the form
-                          const tabsList = document.querySelector('[role="tablist"]');
-                          const signInTab = tabsList?.querySelector('[value="signin"]') as HTMLElement;
-                          signInTab?.click();
+                          setActiveTab('signin');
                           signUpForm.reset();
+                          // Pre-fill the email in sign in form
+                          signInForm.setValue('email', currentEmail);
                         }}
                       >
                         <ArrowLeft className="mr-2 h-4 w-4" />
