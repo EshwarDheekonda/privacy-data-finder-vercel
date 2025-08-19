@@ -28,12 +28,14 @@ export const useEmailCheck = (email: string) => {
         });
 
         if (error) {
+          console.error('Email check error:', error);
           setError('Failed to check email availability');
           setEmailExists(null);
         } else {
-          setEmailExists(data === true);
+          setEmailExists(data);
         }
       } catch (err) {
+        console.error('Email check exception:', err);
         setError('Failed to check email availability');
         setEmailExists(null);
       } finally {
