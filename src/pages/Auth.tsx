@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, RotateCcw } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -36,6 +36,10 @@ export default function Auth() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showVerificationBanner, setShowVerificationBanner] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [userSignupData, setUserSignupData] = useState<SignUpFormData | null>(null);
+  const [resendTimer, setResendTimer] = useState(300); // 5 minutes in seconds
+  const [canResend, setCanResend] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const { user, signUp, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -58,6 +62,23 @@ export default function Auth() {
       password: '',
     },
   });
+
+  // Timer effect for resend functionality
+  useEffect(() => {
+    if (showVerificationBanner && resendTimer > 0) {
+      const interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [showVerificationBanner, resendTimer]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -94,7 +115,10 @@ export default function Auth() {
         }
         } else {
           setUserEmail(data.email);
+          setUserSignupData(data);
           setShowVerificationBanner(true);
+          setResendTimer(300); // Reset timer to 5 minutes
+          setCanResend(false);
           signUpForm.reset();
         }
     } catch (error) {
@@ -142,6 +166,49 @@ export default function Auth() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResendEmail = async () => {
+    if (!userSignupData || !canResend) return;
+    
+    setIsResending(true);
+    try {
+      const { error } = await signUp(
+        userSignupData.email, 
+        userSignupData.password, 
+        userSignupData.username, 
+        userSignupData.fullName
+      );
+      
+      if (error) {
+        toast({
+          title: 'Resend failed',
+          description: error.message || 'Failed to resend verification email.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Verification email sent!',
+          description: 'Please check your email for the verification link.',
+        });
+        setResendTimer(300); // Reset timer to 5 minutes
+        setCanResend(false);
+      }
+    } catch (error) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const handleGoogleSignIn = async () => {
@@ -206,9 +273,37 @@ export default function Auth() {
                     Back to Sign In
                   </Button>
                   
-                  <p className="text-xs text-muted-foreground">
-                    Didn't receive the email? Check your spam folder or try signing up again.
-                  </p>
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Didn't receive the email?
+                    </p>
+                    
+                    {canResend ? (
+                      <Button
+                        variant="ghost"
+                        onClick={handleResendEmail}
+                        disabled={isResending}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        {isResending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Resend Email
+                          </>
+                        )}
+                      </Button>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>Resend available in {formatTime(resendTimer)}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
