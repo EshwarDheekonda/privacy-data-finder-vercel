@@ -1,6 +1,11 @@
-import { Shield, Mail, Phone, MapPin, Github, Twitter, Linkedin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Mail, Phone, MapPin, Github, Twitter, Linkedin, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { DeleteAccountDialog } from '@/components/DeleteAccountDialog';
 
 export const FooterSection = () => {
+  const { user } = useAuth();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const footerLinks = {
     product: [
       { name: "Features", href: "#features" },
@@ -155,8 +160,21 @@ export const FooterSection = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-muted-foreground">
-            © 2024 PrivacyGuard. All rights reserved.
+          <div className="flex items-center gap-6">
+            <div className="text-sm text-muted-foreground">
+              © 2024 PrivacyGuard. All rights reserved.
+            </div>
+            
+            {/* Delete Account Link - Only show if user is authenticated */}
+            {user && (
+              <button
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-sm text-muted-foreground hover:text-destructive transition-colors duration-200 flex items-center gap-2 group"
+              >
+                <Trash2 className="w-3 h-3 group-hover:text-destructive" />
+                Delete Account
+              </button>
+            )}
           </div>
           
           {/* Social Links */}
@@ -184,6 +202,12 @@ export const FooterSection = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog 
+        open={showDeleteDialog} 
+        onOpenChange={setShowDeleteDialog} 
+      />
     </footer>
   );
 };
