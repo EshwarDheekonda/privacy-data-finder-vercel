@@ -15,7 +15,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, RotateCcw, AlertCircle, Check, Info, KeyRound } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, RotateCcw, AlertCircle, Check, Info, KeyRound, X } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -416,6 +416,19 @@ export default function Auth() {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const handleClose = () => {
+    // Clear any pending search results from localStorage
+    localStorage.removeItem('pendingSearchResults');
+    
+    // Navigate back based on context
+    const redirectTo = searchParams.get('redirectTo');
+    if (redirectTo) {
+      navigate(redirectTo);
+    } else {
+      navigate('/');
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
@@ -447,7 +460,15 @@ export default function Auth() {
         <Header />
         
         <main className="container mx-auto px-4 pt-24 pb-8 max-w-md">
-          <Card className="glass-card border-primary/20">
+          <Card className="glass-card border-primary/20 relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-muted z-10"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
                 Reset Your Password
@@ -531,7 +552,15 @@ export default function Auth() {
         <Header />
         
         <main className="container mx-auto px-4 pt-24 pb-8 max-w-md">
-          <Card className="glass-card border-primary/20">
+          <Card className="glass-card border-primary/20 relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-muted z-10"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="mx-auto h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -609,7 +638,15 @@ export default function Auth() {
       <Header />
       
       <main className="container mx-auto px-4 pt-24 pb-8 max-w-md">{/* Added pt-24 for header space */}
-        <Card className="glass-card border-primary/20">
+        <Card className="glass-card border-primary/20 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 h-8 w-8 rounded-full hover:bg-muted z-10"
+            onClick={handleClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Welcome to PrivacyGuard
