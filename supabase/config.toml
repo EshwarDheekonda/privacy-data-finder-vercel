@@ -2,3 +2,9 @@ project_id = "nozkxrartxphvlznpwhk"
 
 [functions.delete-account]
 verify_jwt = true
+
+[functions.send-password-otp]
+verify_jwt = false
+
+[functions.reset-password-with-otp]
+verify_jwt = false

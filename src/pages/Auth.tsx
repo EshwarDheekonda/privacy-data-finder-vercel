@@ -19,6 +19,7 @@ import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Clock, Rotat
 import { Header } from '@/components/Header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -44,6 +45,16 @@ export default function Auth() {
   const [resendTimer, setResendTimer] = useState(300); // 5 minutes in seconds
   const [canResend, setCanResend] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  // OTP-based password reset states
+  const [otpStep, setOtpStep] = useState<'email' | 'otp' | 'password'>('email');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpTimer, setOtpTimer] = useState(600); // 10 minutes in seconds
+  const [canResendOtp, setCanResendOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpNewPassword, setOtpNewPassword] = useState('');
+  const [otpConfirmPassword, setOtpConfirmPassword] = useState('');
+  
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -147,6 +158,23 @@ export default function Auth() {
       password: '',
     },
   });
+
+  // Timer effect for OTP functionality
+  useEffect(() => {
+    if (showForgotPassword && otpStep === 'otp' && otpTimer > 0) {
+      const interval = setInterval(() => {
+        setOtpTimer((prev) => {
+          if (prev <= 1) {
+            setCanResendOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [showForgotPassword, otpStep, otpTimer]);
 
   // Timer effect for resend functionality
   useEffect(() => {
@@ -310,6 +338,196 @@ export default function Auth() {
     } finally {
       setIsResending(false);
     }
+  };
+
+  // OTP-based password reset functions
+  const handleSendOtp = async () => {
+    if (!otpEmail) {
+      toast({
+        title: 'Email required',
+        description: 'Please enter your email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSendingReset(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-otp', {
+        body: { email: otpEmail },
+      });
+
+      if (error) {
+        toast({
+          title: 'Failed to send OTP',
+          description: error.message || 'Failed to send OTP code. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'OTP sent!',
+          description: 'Check your email for the 6-digit verification code.',
+        });
+        setOtpStep('otp');
+        setOtpTimer(600); // Reset timer to 10 minutes
+        setCanResendOtp(false);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!canResendOtp) return;
+    
+    setIsSendingReset(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-password-otp', {
+        body: { email: otpEmail },
+      });
+
+      if (error) {
+        toast({
+          title: 'Failed to resend OTP',
+          description: error.message || 'Failed to resend OTP code. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'OTP resent!',
+          description: 'Check your email for the new 6-digit verification code.',
+        });
+        setOtpTimer(600); // Reset timer to 10 minutes
+        setCanResendOtp(false);
+        setOtpCode(''); // Clear previous code
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      toast({
+        title: 'Invalid OTP',
+        description: 'Please enter a valid 6-digit OTP code.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      // Just move to password step - verification will happen when setting the password
+      setOtpStep('password');
+      toast({
+        title: 'OTP verified!',
+        description: 'Please enter your new password.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResetPasswordWithOtp = async () => {
+    if (!otpNewPassword) {
+      toast({
+        title: 'Password required',
+        description: 'Please enter a new password.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (otpNewPassword !== otpConfirmPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please make sure both passwords are the same.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (otpNewPassword.length < 6) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-password-with-otp', {
+        body: { 
+          email: otpEmail,
+          otpCode: otpCode,
+          newPassword: otpNewPassword 
+        },
+      });
+
+      if (error) {
+        toast({
+          title: 'Password reset failed',
+          description: error.message || 'Failed to reset password. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Password reset successful!',
+          description: 'Your password has been updated. Please sign in with your new password.',
+        });
+        
+        // Reset all states and close modal
+        setShowForgotPassword(false);
+        setOtpStep('email');
+        setOtpEmail('');
+        setOtpCode('');
+        setOtpNewPassword('');
+        setOtpConfirmPassword('');
+        
+        // Pre-fill the email in sign in form
+        signInForm.setValue('email', otpEmail);
+        setActiveTab('signin');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Unexpected error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const resetOtpFlow = () => {
+    setOtpStep('email');
+    setOtpEmail('');
+    setOtpCode('');
+    setOtpNewPassword('');
+    setOtpConfirmPassword('');
+    setOtpTimer(600);
+    setCanResendOtp(false);
   };
 
   const handleForgotPassword = async () => {
@@ -721,7 +939,10 @@ export default function Auth() {
                         type="button"
                         variant="link"
                         className="text-sm text-muted-foreground hover:text-primary"
-                        onClick={() => setShowForgotPassword(true)}
+                        onClick={() => {
+                          setShowForgotPassword(true);
+                          resetOtpFlow();
+                        }}
                       >
                         Forgot your password?
                       </Button>
@@ -921,8 +1142,13 @@ export default function Auth() {
         </Card>
       </main>
 
-      {/* Forgot Password Modal */}
-      <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+      {/* OTP-based Forgot Password Modal */}
+      <Dialog open={showForgotPassword} onOpenChange={(open) => {
+        setShowForgotPassword(open);
+        if (!open) {
+          resetOtpFlow();
+        }
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -930,61 +1156,239 @@ export default function Auth() {
               Reset Password
             </DialogTitle>
             <DialogDescription>
-              Enter your email address and we'll send you a link to reset your password.
+              {otpStep === 'email' && 'Enter your email address to receive a verification code'}
+              {otpStep === 'otp' && 'Enter the 6-digit code sent to your email'}
+              {otpStep === 'password' && 'Create your new password'}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="forgot-email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email Address
-              </Label>
-              <Input
-                id="forgot-email"
-                type="email"
-                placeholder="Enter your email"
-                value={forgotPasswordEmail}
-                onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleForgotPassword();
-                  }
-                }}
-              />
-            </div>
-            
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={handleForgotPassword} 
-                disabled={isSendingReset || !forgotPasswordEmail}
-                className="w-full"
-              >
-                {isSendingReset ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Reset Link
-                  </>
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setShowForgotPassword(false);
-                  setForgotPasswordEmail('');
-                }}
-                className="w-full"
-              >
-                Cancel
-              </Button>
-            </div>
+            {/* Step 1: Email Input */}
+            {otpStep === 'email' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="otp-email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email Address
+                  </Label>
+                  <Input
+                    id="otp-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={otpEmail}
+                    onChange={(e) => setOtpEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSendOtp();
+                      }
+                    }}
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    onClick={handleSendOtp} 
+                    disabled={isSendingReset || !otpEmail}
+                    className="w-full"
+                  >
+                    {isSendingReset ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Verification Code
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      resetOtpFlow();
+                    }}
+                    className="w-full"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: OTP Verification */}
+            {otpStep === 'otp' && (
+              <>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    We sent a 6-digit code to
+                  </p>
+                  <p className="font-medium">{otpEmail}</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-center block">Enter Verification Code</Label>
+                    <div className="flex justify-center">
+                      <InputOTP
+                        maxLength={6}
+                        value={otpCode}
+                        onChange={(value) => setOtpCode(value)}
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                  </div>
+
+                  <div className="text-center space-y-2">
+                    {otpTimer > 0 ? (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>Code expires in {formatTime(otpTimer)}</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-destructive">Code has expired</p>
+                    )}
+
+                    {canResendOtp ? (
+                      <Button
+                        variant="ghost"
+                        onClick={handleResendOtp}
+                        disabled={isSendingReset}
+                        className="text-primary hover:text-primary/80"
+                      >
+                        {isSendingReset ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw className="mr-2 h-4 w-4" />
+                            Resend Code
+                          </>
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={handleVerifyOtp} 
+                      disabled={isVerifyingOtp || otpCode.length !== 6}
+                      className="w-full"
+                    >
+                      {isVerifyingOtp ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Verify Code
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setOtpStep('email')}
+                      className="w-full"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Email
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Step 3: New Password */}
+            {otpStep === 'password' && (
+              <>
+                <div className="text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Code verified! Set your new password
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="otp-new-password" className="flex items-center gap-2">
+                      <Lock className="h-4 w-4" />
+                      New Password
+                    </Label>
+                    <Input
+                      id="otp-new-password"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={otpNewPassword}
+                      onChange={(e) => setOtpNewPassword(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="otp-confirm-password" className="flex items-center gap-2">
+                      <Lock className="h-4 w-4" />
+                      Confirm Password
+                    </Label>
+                    <Input
+                      id="otp-confirm-password"
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={otpConfirmPassword}
+                      onChange={(e) => setOtpConfirmPassword(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleResetPasswordWithOtp();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={handleResetPasswordWithOtp} 
+                      disabled={isResettingPassword || !otpNewPassword || !otpConfirmPassword}
+                      className="w-full"
+                    >
+                      {isResettingPassword ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating Password...
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Update Password
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setOtpStep('otp')}
+                      className="w-full"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back to Verification
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>
