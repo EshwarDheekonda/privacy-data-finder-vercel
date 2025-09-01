@@ -11,24 +11,6 @@ export const FooterSection = () => {
       { name: "Features", href: "#features" },
       { name: "How it Works", href: "#how-it-works" },
       { name: "Use Cases", href: "#use-cases" }
-    ],
-    company: [
-      { name: "About Us", href: "#about" },
-      { name: "Careers", href: "#careers" },
-      { name: "Press", href: "#press" },
-      { name: "Contact", href: "#contact" }
-    ],
-    resources: [
-      { name: "Privacy Guide", href: "#guide" },
-      { name: "Security Center", href: "#security" },
-      { name: "Help Center", href: "#help" },
-      { name: "Status", href: "#status" }
-    ],
-    legal: [
-      { name: "Privacy Policy", href: "#privacy" },
-      { name: "Terms of Service", href: "#terms" },
-      { name: "Data Processing", href: "#data" },
-      { name: "Compliance", href: "#compliance" }
     ]
   };
 
@@ -42,9 +24,9 @@ export const FooterSection = () => {
     <footer className="bg-surface border-t border-border">
       <div className="max-w-7xl mx-auto px-6 py-16">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {/* Company Info */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
                 <Shield className="w-6 h-6 text-white" />
@@ -79,44 +61,10 @@ export const FooterSection = () => {
                   </a>
                 </li>
               ))}
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Company</h3>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href} 
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Resources Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Resources</h3>
-            <ul className="space-y-3">
-              {footerLinks.resources.map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href} 
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
               
               {/* Delete Account Link - Only show if user is authenticated */}
               {user && (
-                <li>
+                <li className="pt-2 border-t border-border/50">
                   <button
                     onClick={() => setShowDeleteDialog(true)}
                     className="text-sm text-muted-foreground hover:text-destructive transition-colors duration-200 flex items-center gap-2 group"
@@ -129,22 +77,8 @@ export const FooterSection = () => {
             </ul>
           </div>
 
-          {/* Legal Links */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Legal</h3>
-            <ul className="space-y-3">
-              {footerLinks.legal.map((link, index) => (
-                <li key={index}>
-                  <a 
-                    href={link.href} 
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Spacer for alignment */}
+          <div></div>
         </div>
 
         {/* Security Certifications */}
