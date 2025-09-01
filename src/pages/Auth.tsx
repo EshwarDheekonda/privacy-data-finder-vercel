@@ -61,6 +61,14 @@ export default function Auth() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  // Signup OTP states
+  const [showSignupOtp, setShowSignupOtp] = useState(false);
+  const [signupOtpCode, setSignupOtpCode] = useState('');
+  const [signupOtpTimer, setSignupOtpTimer] = useState(600);
+  const [canResendSignupOtp, setCanResendSignupOtp] = useState(false);
+  const [isSendingSignupOtp, setIsSendingSignupOtp] = useState(false);
+  const [isVerifyingSignupOtp, setIsVerifyingSignupOtp] = useState(false);
+  
   const [activeTab, setActiveTab] = useState('signin'); // Add state for active tab
   const { user, signUp, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
@@ -175,6 +183,21 @@ export default function Auth() {
       return () => clearInterval(interval);
     }
   }, [showForgotPassword, otpStep, otpTimer]);
+  // Timer for signup OTP
+  useEffect(() => {
+    if (showSignupOtp && signupOtpTimer > 0) {
+      const interval = setInterval(() => {
+        setSignupOtpTimer((prev) => {
+          if (prev <= 1) {
+            setCanResendSignupOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [showSignupOtp, signupOtpTimer]);
 
   // Timer effect for resend functionality
   useEffect(() => {
@@ -226,36 +249,42 @@ export default function Auth() {
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
-      const { error } = await signUp(data.email, data.password, data.username, data.fullName);
-      
+      // If email already exists, prompt to sign in
+      if (emailExists === true) {
+        toast({
+          title: 'Account already exists',
+          description: 'Please sign in to your existing account or use a different email.',
+          variant: 'destructive',
+        });
+        setActiveTab('signin');
+        signInForm.setValue('email', data.email);
+        return;
+      }
+
+      // Send signup OTP
+      setUserEmail(data.email);
+      setUserSignupData(data);
+      const { error } = await supabase.functions.invoke('send-signup-otp', {
+        body: { email: data.email },
+      });
+
       if (error) {
-        if (error.message.includes('already registered')) {
-          toast({
-            title: 'Account already exists',
-            description: 'Please sign in to your existing account or use a different email.',
-            variant: 'destructive',
-          });
-        } else if (error.message.includes('username')) {
-          toast({
-            title: 'Username unavailable',
-            description: 'This username is already taken. Please choose a different one.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Sign up failed',
-            description: error.message || 'An error occurred during sign up.',
-            variant: 'destructive',
-          });
-        }
-        } else {
-          setUserEmail(data.email);
-          setUserSignupData(data);
-          setShowVerificationBanner(true);
-          setResendTimer(300); // Reset timer to 5 minutes
-          setCanResend(false);
-          signUpForm.reset();
-        }
+        toast({
+          title: 'Failed to send code',
+          description: error.message || 'Could not send verification code. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Verification code sent',
+        description: 'Check your email for the 6-digit code.',
+      });
+      setShowSignupOtp(true);
+      setSignupOtpTimer(600);
+      setCanResendSignupOtp(false);
+      signUpForm.reset();
     } catch (error) {
       toast({
         title: 'Unexpected error',
@@ -337,6 +366,66 @@ export default function Auth() {
       });
     } finally {
       setIsResending(false);
+    }
+  };
+
+  // Signup OTP handlers
+  const handleResendSignupOtp = async () => {
+    if (!canResendSignupOtp || !userEmail) return;
+    setIsSendingSignupOtp(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-signup-otp', {
+        body: { email: userEmail },
+      });
+      if (error) {
+        toast({ title: 'Resend failed', description: error.message || 'Could not resend code.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Code resent', description: 'Check your email for the new code.' });
+        setSignupOtpTimer(600);
+        setCanResendSignupOtp(false);
+        setSignupOtpCode('');
+      }
+    } finally {
+      setIsSendingSignupOtp(false);
+    }
+  };
+
+  const handleVerifySignupOtp = async () => {
+    if (!signupOtpCode || signupOtpCode.length !== 6 || !userSignupData) return;
+    setIsVerifyingSignupOtp(true);
+    try {
+      const { error } = await supabase.functions.invoke('verify-signup-otp', {
+        body: {
+          email: userEmail,
+          otpCode: signupOtpCode,
+          password: userSignupData.password,
+          username: userSignupData.username,
+          fullName: userSignupData.fullName,
+        },
+      });
+      if (error) {
+        toast({ title: 'Verification failed', description: error.message || 'Invalid or expired code.', variant: 'destructive' });
+        return;
+      }
+
+      // Auto sign in the new user
+      const { error: signInError } = await signIn(userEmail, userSignupData.password);
+      if (signInError) {
+        toast({ title: 'Account created', description: 'Please sign in with your new credentials.' });
+        setActiveTab('signin');
+      } else {
+        toast({ title: 'Welcome!', description: 'Your account has been created.' });
+        const redirectTo = searchParams.get('redirectTo') || '/';
+        navigate(redirectTo);
+      }
+
+      // Reset signup OTP state
+      setShowSignupOtp(false);
+      setSignupOtpCode('');
+      setSignupOtpTimer(600);
+      setCanResendSignupOtp(false);
+    } finally {
+      setIsVerifyingSignupOtp(false);
     }
   };
 
@@ -1389,6 +1478,92 @@ export default function Auth() {
                 </div>
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Signup Verification Modal */}
+      <Dialog open={showSignupOtp} onOpenChange={(open) => {
+        setShowSignupOtp(open);
+        if (!open) {
+          setSignupOtpCode('');
+          setSignupOtpTimer(600);
+          setCanResendSignupOtp(false);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Verify your email
+            </DialogTitle>
+            <DialogDescription>
+              Enter the 6-digit code we sent to {userEmail}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} value={signupOtpCode} onChange={(v) => setSignupOtpCode(v)}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              {signupOtpTimer > 0 ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  <span>Code expires in {formatTime(signupOtpTimer)}</span>
+                </div>
+              ) : (
+                <p className="text-sm text-destructive">Code has expired</p>
+              )}
+
+              {canResendSignupOtp ? (
+                <Button variant="ghost" onClick={handleResendSignupOtp} disabled={isSendingSignupOtp} className="text-primary hover:text-primary/80">
+                  {isSendingSignupOtp ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Resend Code
+                    </>
+                  )}
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button onClick={handleVerifySignupOtp} disabled={isVerifyingSignupOtp || signupOtpCode.length !== 6} className="w-full">
+                {isVerifyingSignupOtp ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Verify and Create Account
+                  </>
+                )}
+              </Button>
+
+              <Button variant="outline" onClick={() => setShowSignupOtp(false)} className="w-full">
+                Cancel
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
