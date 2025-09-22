@@ -107,6 +107,29 @@ export interface BackendAnalysisResponse {
   // Recommendations - exactly as backend returns
   recommendations: string[];
 
+  // Optional Enhanced Properties (NEW)
+  pii_summary?: {
+    total_items: number;
+    categories_found: number;
+    sensitive_items: number;
+    non_sensitive_items: number;
+    categories_breakdown: {
+      names: number;
+      emails: number;
+      phones: number;
+      addresses: number;
+      locations: number;
+      employers: number;
+      education: number;
+      social_media: number;
+      sensitive_docs: number;
+    };
+  };
+
+  // Enhanced Metadata (NEW)
+  query?: string;
+  timestamp?: string;
+
   // Error case fields (when no data found)
   message?: string;
   suggestions?: string[];

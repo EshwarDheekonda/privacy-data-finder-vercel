@@ -4,16 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BackendAnalysisResponse } from '@/lib/api';
-import { ArrowLeft, Download, Share, AlertTriangle, Shield, Eye } from 'lucide-react';
+import { BackendAnalysisResponse, searchApi, handleApiError } from '@/lib/api';
+import { RISK_LEVEL_COLORS, PII_CATEGORIES, PLATFORM_COLORS } from '@/types/enhanced-backend';
+import { StatsCards } from '@/components/dashboard/StatsCards';
+import { ExecutiveSummary } from '@/components/dashboard/ExecutiveSummary';
+import { ArrowLeft, Download, Share, AlertTriangle, Shield, Eye, Globe, Users, FileText, Settings, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { searchApi, handleApiError } from '@/lib/api';
+import { motion } from 'framer-motion';
 
 const DetailedResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [analysisData, setAnalysisData] = useState<BackendAnalysisResponse | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('executive');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
@@ -103,6 +106,11 @@ const DetailedResults = () => {
 
   // Helper function to count total PII items from backend response
   const getTotalPIIItems = (data: BackendAnalysisResponse) => {
+    // Use the pii_summary if available, otherwise calculate manually
+    if (data.pii_summary?.total_items) {
+      return data.pii_summary.total_items;
+    }
+    
     const piiKeys: (keyof BackendAnalysisResponse)[] = [
       'Name', 'Location', 'Email', 'Phone', 'DOB', 'Address', 'Gender', 'Employer',
       'Education', 'Birth Place', 'Personal Cell', 'Business Phone', 'Facebook Account',
@@ -308,178 +316,281 @@ const DetailedResults = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Quick Stats - Updated to use actual backend data */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-lg">
-                    <Eye className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {analysisData.extraction_summary?.total_sources || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Sources Analyzed</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Enhanced Stats Dashboard */}
+          <StatsCards data={analysisData} />
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-destructive/10 rounded-lg">
-                    <AlertTriangle className="w-6 h-6 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totalPIIItems}</p>
-                    <p className="text-sm text-muted-foreground">PII Items Found</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-lg ${getRiskLevelColor(analysisData.risk_level)}`}>
-                    <Shield className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{analysisData.risk_level}</p>
-                    <p className="text-sm text-muted-foreground">Risk Level</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Shield className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{analysisData.risk_score}/15</p>
-                    <p className="text-sm text-muted-foreground">Risk Score</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tabbed Content */}
+          {/* Enhanced Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="pii-data">PII Data</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-7 text-xs">
+              <TabsTrigger value="executive">Executive</TabsTrigger>
+              <TabsTrigger value="data-discovery">Data Discovery</TabsTrigger>
+              <TabsTrigger value="source-analysis">Source Analysis</TabsTrigger>
               <TabsTrigger value="risk-assessment">Risk Assessment</TabsTrigger>
               <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+              <TabsTrigger value="technical">Technical</TabsTrigger>
+              <TabsTrigger value="export">Export & Share</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="mt-6">
+            {/* Tab 1: Executive Summary */}
+            <TabsContent value="executive" className="mt-6">
+              <ExecutiveSummary data={analysisData} />
+            </TabsContent>
+
+            {/* Tab 2: Data Discovery */}
+            <TabsContent value="data-discovery" className="mt-6">
               <div className="space-y-6">
-                <Card>
+                {/* High-Risk Data Section */}
+                <Card className="border-l-4 border-l-red-500">
                   <CardHeader>
-                    <CardTitle>Analysis Overview</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-red-600">
+                      <AlertTriangle className="w-5 h-5" />
+                      High-Risk Data
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold mb-2">Processing Summary</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Analyzed {analysisData.extraction_summary?.total_sources} sources 
-                          ({analysisData.extraction_summary?.webpage_sources} webpages, 
-                          {analysisData.extraction_summary?.social_media_sources} social media) 
-                          in {analysisData.extraction_summary?.extraction_time}s
-                        </p>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Risk Analysis</h4>
-                        <div className="space-y-1">
-                          {Object.entries(analysisData.risk_analysis || {}).map(([category, findings]) => (
-                            <p key={category} className="text-sm">
-                              <span className="font-medium">{category}:</span> {findings}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {PII_CATEGORIES.sensitive_docs.map(category => {
+                        const data = analysisData[category as keyof BackendAnalysisResponse];
+                        if (Array.isArray(data) && data.length > 0) {
+                          return (
+                            <Card key={category} className="bg-red-50 border-red-200">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-red-700 mb-2">{category}</h4>
+                                <div className="space-y-1">
+                                  {data.map((item, index) => (
+                                    <Badge key={index} variant="destructive" className="mr-2 mb-1">
+                                      {category === 'SSN' || category === 'Credit Card' ? '***MASKED***' : item}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Personal Information Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Personal Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[...PII_CATEGORIES.personal, ...PII_CATEGORIES.contact].map(category => {
+                        const data = analysisData[category as keyof BackendAnalysisResponse];
+                        if (Array.isArray(data) && data.length > 0) {
+                          return (
+                            <Card key={category} className="bg-blue-50 border-blue-200">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-blue-700 mb-2">{category}</h4>
+                                <div className="space-y-1">
+                                  {data.map((item, index) => (
+                                    <Badge key={index} className="bg-blue-100 text-blue-700 mr-2 mb-1">
+                                      {item}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Professional Information Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Professional Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {PII_CATEGORIES.professional.map(category => {
+                        const data = analysisData[category as keyof BackendAnalysisResponse];
+                        if (Array.isArray(data) && data.length > 0) {
+                          return (
+                            <Card key={category} className="bg-green-50 border-green-200">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-green-700 mb-2">{category}</h4>
+                                <div className="space-y-1">
+                                  {data.map((item, index) => (
+                                    <Badge key={index} className="bg-green-100 text-green-700 mr-2 mb-1">
+                                      {item}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Social Media Presence Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="w-5 h-5" />
+                      Social Media Presence
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {PII_CATEGORIES.social_media.map(category => {
+                        const data = analysisData[category as keyof BackendAnalysisResponse];
+                        const platform = category.split(' ')[0].toLowerCase();
+                        if (Array.isArray(data) && data.length > 0) {
+                          return (
+                            <Card key={category} className="bg-purple-50 border-purple-200">
+                              <CardContent className="p-4">
+                                <h4 className="font-semibold text-purple-700 mb-2">{category}</h4>
+                                <div className="space-y-1">
+                                  {data.map((item, index) => (
+                                    <Badge key={index} className="bg-purple-100 text-purple-700 mr-2 mb-1">
+                                      {item}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
-            <TabsContent value="pii-data" className="mt-6">
-              <div className="space-y-4">
-                {Object.entries(analysisData).map(([key, value]) => {
-                  // Only show PII categories (arrays with data)
-                  if (Array.isArray(value) && value.length > 0) {
-                    return (
-                      <Card key={key}>
-                        <CardHeader>
-                          <CardTitle className="text-lg">{key}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {value.map((item, index) => (
-                              <Badge key={index} variant="secondary" className="mr-2 mb-2">
-                                {item}
-                              </Badge>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
+            {/* Tab 3: Source Analysis - Coming Soon */}
+            <TabsContent value="source-analysis" className="mt-6">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Settings className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">Source Analysis</h3>
+                  <p className="text-muted-foreground">
+                    Detailed breakdown of all processed sources coming soon.
+                  </p>
+                </CardContent>
+              </Card>
             </TabsContent>
 
+            {/* Tab 4: Risk Assessment */}
             <TabsContent value="risk-assessment" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Risk Assessment Details</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">Overall Risk Score:</span>
-                      <Badge className={getRiskLevelColor(analysisData.risk_level)}>
-                        {analysisData.risk_score}/15 ({analysisData.risk_level})
-                      </Badge>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {Object.entries(analysisData.risk_analysis || {}).map(([category, findings]) => (
-                        <div key={category}>
-                          <h4 className="font-semibold text-sm">{category}</h4>
-                          <p className="text-sm text-muted-foreground">{findings}</p>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold mb-2">Overall Risk Score</h4>
+                        <div className="flex items-center gap-4">
+                          <div className="text-4xl font-bold text-primary">
+                            {analysisData.risk_score}
+                          </div>
+                          <div>
+                            <Badge className={getRiskLevelColor(analysisData.risk_level)}>
+                              {analysisData.risk_level}
+                            </Badge>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Out of 15 possible points
+                            </p>
+                          </div>
                         </div>
-                      ))}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Risk Breakdown</h4>
+                        <div className="space-y-2">
+                          {Object.entries(analysisData.risk_analysis || {}).map(([category, findings]) => (
+                            <div key={category} className="text-sm">
+                              <span className="font-medium text-primary">{category}:</span>
+                              <p className="text-muted-foreground mt-1">{findings}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
+            {/* Tab 5: Recommendations */}
             <TabsContent value="recommendations" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Privacy Recommendations</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {analysisData.recommendations?.map((recommendation, index) => (
-                      <div key={index} className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-xs font-semibold text-primary">{index + 1}</span>
+                  <div className="space-y-4">
+                    {analysisData.recommendations && analysisData.recommendations.length > 0 ? (
+                      analysisData.recommendations.map((recommendation, index) => (
+                        <div key={index} className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                            {index + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm">{recommendation}</p>
+                          </div>
                         </div>
-                        <p className="text-sm">{recommendation}</p>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">No specific recommendations available at this time.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab 6: Technical Details - Coming Soon */}
+            <TabsContent value="technical" className="mt-6">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <TrendingUp className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">Technical Details</h3>
+                  <p className="text-muted-foreground">
+                    Extraction performance metrics and technical analysis coming soon.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab 7: Export & Sharing - Coming Soon */}
+            <TabsContent value="export" className="mt-6">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Share className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-xl font-semibold mb-2">Export & Sharing</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Advanced export options and sharing features coming soon.
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Button onClick={handleExportReport}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export JSON Report
+                    </Button>
+                    <Button variant="outline" onClick={handleShareResults}>
+                      <Share className="w-4 h-4 mr-2" />
+                      Share Results
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
