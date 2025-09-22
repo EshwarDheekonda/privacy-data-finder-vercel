@@ -8,6 +8,11 @@ import { BackendAnalysisResponse, searchApi, handleApiError } from '@/lib/api';
 import { RISK_LEVEL_COLORS, PII_CATEGORIES, PLATFORM_COLORS } from '@/types/enhanced-backend';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { ExecutiveSummary } from '@/components/dashboard/ExecutiveSummary';
+import { SourceAnalysis } from '@/components/dashboard/SourceAnalysis';
+import { TechnicalDetails } from '@/components/dashboard/TechnicalDetails';
+import { EnhancedRiskAssessment } from '@/components/dashboard/EnhancedRiskAssessment';
+import { EnhancedRecommendations } from '@/components/dashboard/EnhancedRecommendations';
+import { EnhancedExportShare } from '@/components/dashboard/EnhancedExportShare';
 import { ArrowLeft, Download, Share, AlertTriangle, Shield, Eye, Globe, Users, FileText, Settings, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
@@ -478,122 +483,29 @@ const DetailedResults = () => {
               </div>
             </TabsContent>
 
-            {/* Tab 3: Source Analysis - Coming Soon */}
+            {/* Tab 3: Source Analysis */}
             <TabsContent value="source-analysis" className="mt-6">
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Settings className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">Source Analysis</h3>
-                  <p className="text-muted-foreground">
-                    Detailed breakdown of all processed sources coming soon.
-                  </p>
-                </CardContent>
-              </Card>
+              <SourceAnalysis data={analysisData} />
             </TabsContent>
 
-            {/* Tab 4: Risk Assessment */}
+            {/* Tab 4: Enhanced Risk Assessment */}
             <TabsContent value="risk-assessment" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Risk Assessment Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold mb-2">Overall Risk Score</h4>
-                        <div className="flex items-center gap-4">
-                          <div className="text-4xl font-bold text-primary">
-                            {analysisData.risk_score}
-                          </div>
-                          <div>
-                            <Badge className={getRiskLevelColor(analysisData.risk_level)}>
-                              {analysisData.risk_level}
-                            </Badge>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Out of 15 possible points
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Risk Breakdown</h4>
-                        <div className="space-y-2">
-                          {Object.entries(analysisData.risk_analysis || {}).map(([category, findings]) => (
-                            <div key={category} className="text-sm">
-                              <span className="font-medium text-primary">{category}:</span>
-                              <p className="text-muted-foreground mt-1">{findings}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <EnhancedRiskAssessment data={analysisData} />
             </TabsContent>
 
-            {/* Tab 5: Recommendations */}
+            {/* Tab 5: Enhanced Recommendations */}
             <TabsContent value="recommendations" className="mt-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Privacy Recommendations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {analysisData.recommendations && analysisData.recommendations.length > 0 ? (
-                      analysisData.recommendations.map((recommendation, index) => (
-                        <div key={index} className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-                          <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm">{recommendation}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground">No specific recommendations available at this time.</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <EnhancedRecommendations data={analysisData} />
             </TabsContent>
 
-            {/* Tab 6: Technical Details - Coming Soon */}
+            {/* Tab 6: Technical Details */}
             <TabsContent value="technical" className="mt-6">
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <TrendingUp className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">Technical Details</h3>
-                  <p className="text-muted-foreground">
-                    Extraction performance metrics and technical analysis coming soon.
-                  </p>
-                </CardContent>
-              </Card>
+              <TechnicalDetails data={analysisData} />
             </TabsContent>
 
-            {/* Tab 7: Export & Sharing - Coming Soon */}
+            {/* Tab 7: Enhanced Export & Sharing */}
             <TabsContent value="export" className="mt-6">
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Share className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-xl font-semibold mb-2">Export & Sharing</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Advanced export options and sharing features coming soon.
-                  </p>
-                  <div className="flex gap-4 justify-center">
-                    <Button onClick={handleExportReport}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export JSON Report
-                    </Button>
-                    <Button variant="outline" onClick={handleShareResults}>
-                      <Share className="w-4 h-4 mr-2" />
-                      Share Results
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <EnhancedExportShare data={analysisData} query={location.state?.query || ''} />
             </TabsContent>
           </Tabs>
         </div>

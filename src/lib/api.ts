@@ -99,6 +99,8 @@ export interface BackendAnalysisResponse {
       type: string;
       status: string;
       data_points: number;
+      platform?: string;
+      scraper_used?: string;
       username?: string;
       error?: string;
     }>;
