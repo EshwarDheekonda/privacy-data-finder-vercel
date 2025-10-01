@@ -15,9 +15,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Loader2, Mail, Lock, User, Chrome, CheckCircle, ArrowLeft, Info } from 'lucide-react';
+import { Loader2, Mail, Lock, User, Chrome, ArrowLeft, Info, Timer } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const signUpSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -37,8 +38,6 @@ type SignInFormData = z.infer<typeof signInSchema>;
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showVerificationBanner, setShowVerificationBanner] = useState(false);
-  const [userEmail, setUserEmail] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
@@ -47,90 +46,53 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [activeTab, setActiveTab] = useState('signin');
   
-  const { user, signUp, signIn, signInWithGoogle } = useAuth();
+  // OTP states
+  const [showSignupOTP, setShowSignupOTP] = useState(false);
+  const [showPasswordOTP, setShowPasswordOTP] = useState(false);
+  const [signupOTP, setSignupOTP] = useState('');
+  const [passwordOTP, setPasswordOTP] = useState('');
+  const [signupFormData, setSignupFormData] = useState<SignUpFormData | null>(null);
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [canResendOTP, setCanResendOTP] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  
+  const { user, signIn, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      username: '',
-      fullName: '',
-    },
+    defaultValues: { email: '', password: '', username: '', fullName: '' },
   });
 
   const signInForm = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
-  // Username availability check
   const currentUsername = signUpForm.watch('username');
-  const { isChecking, isAvailable, error: usernameError } = useUsernameCheck(currentUsername);
-
-  // Email availability check
+  const { isChecking, isAvailable } = useUsernameCheck(currentUsername);
   const currentEmail = signUpForm.watch('email');
-  const { isChecking: isCheckingEmail, emailExists, error: emailError } = useEmailCheck(currentEmail);
+  const { isChecking: isCheckingEmail, emailExists } = useEmailCheck(currentEmail);
 
-  // Check if this is a password reset flow
-  const accessToken = searchParams.get('access_token');
-  const refreshToken = searchParams.get('refresh_token');
-  const type = searchParams.get('type');
-  const isPasswordResetFlow = type === 'recovery' && accessToken && refreshToken;
-
-  // Handle auth tokens from password reset email
-  useEffect(() => {
-    const handleAuthTokens = async () => {
-      if (type === 'recovery' && accessToken && refreshToken) {
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (error) {
-            console.error('Session setup error:', error);
-            toast({
-              title: 'Reset link invalid',
-              description: 'The password reset link is invalid or has expired. Please request a new one.',
-              variant: 'destructive',
-            });
-            navigate('/auth');
-          }
-        } catch (error) {
-          console.error('Auth token handling error:', error);
-          toast({
-            title: 'Reset link error',
-            description: 'There was an error processing the reset link. Please try again.',
-            variant: 'destructive',
-          });
-          navigate('/auth');
-        }
-      }
-    };
-
-    handleAuthTokens();
-  }, [type, accessToken, refreshToken, navigate, toast]);
-
-  // Set active tab from URL params
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'signup' || tab === 'signin') {
-      setActiveTab(tab);
-    }
+    if (tab === 'signup' || tab === 'signin') setActiveTab(tab);
   }, [searchParams]);
 
-  // Redirect if already authenticated (but not during password reset)
   useEffect(() => {
-    if (user && !isPasswordResetFlow) {
+    if (otpTimer > 0) {
+      const timer = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setCanResendOTP(true);
+    }
+  }, [otpTimer]);
+
+  useEffect(() => {
+    if (user) {
       const redirectTo = searchParams.get('redirectTo') || '/';
-      
       if (redirectTo.includes('/results')) {
         const pendingResults = localStorage.getItem('pendingSearchResults');
         if (pendingResults) {
@@ -139,48 +101,72 @@ export default function Auth() {
           return;
         }
       }
-      
       navigate(redirectTo);
     }
-  }, [user, navigate, searchParams, isPasswordResetFlow]);
+  }, [user, navigate, searchParams]);
 
   const handleSignUp = async (data: SignUpFormData) => {
     setIsLoading(true);
     try {
       if (emailExists === true) {
-        toast({
-          title: 'Account already exists',
-          description: 'Please sign in to your existing account or use a different email.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Account already exists', description: 'Please sign in to your existing account.', variant: 'destructive' });
         setActiveTab('signin');
         signInForm.setValue('email', data.email);
         return;
       }
 
-      const { error } = await signUp(data.email, data.password, data.username, data.fullName);
-
-      if (error) {
-        toast({
-          title: 'Sign up failed',
-          description: error.message || 'An error occurred during sign up.',
-          variant: 'destructive',
-        });
-      } else {
-        setUserEmail(data.email);
-        setShowVerificationBanner(true);
-        toast({
-          title: 'Check your email',
-          description: 'We sent you a confirmation link to verify your account.',
-        });
-        signUpForm.reset();
-      }
-    } catch (error) {
-      toast({
-        title: 'Unexpected error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
+      const response = await supabase.functions.invoke('send-signup-otp', {
+        body: { email: data.email, username: data.username, fullName: data.fullName }
       });
+
+      if (response.error) throw new Error(response.error.message);
+
+      setSignupFormData(data);
+      setUserEmail(data.email);
+      setShowSignupOTP(true);
+      setOtpTimer(60);
+      setCanResendOTP(false);
+      toast({ title: 'Verification code sent!', description: 'Check your email for the 6-digit code.' });
+    } catch (error: any) {
+      toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifySignupOTP = async () => {
+    if (!signupFormData || signupOTP.length !== 6) return;
+    setIsLoading(true);
+    try {
+      const response = await supabase.functions.invoke('verify-signup-otp', {
+        body: { ...signupFormData, otp: signupOTP }
+      });
+      if (response.error) throw new Error(response.error.message);
+      toast({ title: 'Account created!', description: 'Signing you in...' });
+      await signIn(signupFormData.email, signupFormData.password);
+      setShowSignupOTP(false);
+      setSignupOTP('');
+      setSignupFormData(null);
+      signUpForm.reset();
+    } catch (error: any) {
+      toast({ title: 'Verification failed', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendSignupOTP = async () => {
+    if (!signupFormData || !canResendOTP) return;
+    setIsLoading(true);
+    try {
+      await supabase.functions.invoke('send-signup-otp', {
+        body: { email: signupFormData.email, username: signupFormData.username, fullName: signupFormData.fullName }
+      });
+      setOtpTimer(60);
+      setCanResendOTP(false);
+      toast({ title: 'Code resent!', description: 'Check your email.' });
+    } catch (error: any) {
+      toast({ title: 'Resend failed', description: error.message, variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -190,129 +176,52 @@ export default function Auth() {
     setIsLoading(true);
     try {
       const { error } = await signIn(data.email, data.password);
-      
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Invalid credentials',
-            description: 'Please check your email and password and try again.',
-            variant: 'destructive',
-          });
-        } else if (error.message.includes('Email not confirmed')) {
-          toast({
-            title: 'Email not verified',
-            description: 'Please check your email and click the verification link before signing in.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Sign in failed',
-            description: error.message || 'An error occurred during sign in.',
-            variant: 'destructive',
-          });
-        }
+        toast({ title: 'Sign in failed', description: error.message, variant: 'destructive' });
       } else {
-        toast({
-          title: 'Welcome back!',
-          description: 'You have been signed in successfully.',
-        });
+        toast({ title: 'Welcome back!', description: 'Signed in successfully.' });
       }
     } catch (error) {
-      toast({
-        title: 'Unexpected error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Unexpected error', description: 'Please try again.', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotPasswordEmail) {
-      toast({
-        title: 'Email required',
-        description: 'Please enter your email address.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    if (!forgotPasswordEmail) return;
     setIsSendingReset(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
-      });
-
-      if (error) {
-        toast({
-          title: 'Failed to send reset email',
-          description: error.message || 'Failed to send password reset email. Please try again.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Reset email sent!',
-          description: 'Check your email for the password reset link.',
-        });
-        setShowForgotPassword(false);
-        setForgotPasswordEmail('');
-      }
+      const response = await supabase.functions.invoke('send-password-otp', { body: { email: forgotPasswordEmail } });
+      if (response.error) throw new Error(response.error.message);
+      setShowPasswordOTP(true);
+      setOtpTimer(60);
+      setCanResendOTP(false);
+      toast({ title: 'Code sent!', description: 'Check your email.' });
     } catch (error: any) {
-      toast({
-        title: 'Unexpected error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setIsSendingReset(false);
     }
   };
 
-  const handlePasswordReset = async () => {
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure both passwords are the same.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: 'Password too short',
-        description: 'Password must be at least 6 characters long.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleVerifyPasswordOTP = async () => {
+    if (passwordOTP.length !== 6 || !newPassword) return;
     setIsResettingPassword(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      const response = await supabase.functions.invoke('reset-password-with-otp', {
+        body: { email: forgotPasswordEmail, otp: passwordOTP, newPassword }
       });
-
-      if (error) {
-        toast({
-          title: 'Password reset failed',
-          description: error.message || 'Failed to reset password. Please try again.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Password updated!',
-          description: 'Your password has been successfully updated. You can now sign in with your new password.',
-        });
-        navigate('/');
-      }
-    } catch (error) {
-      toast({
-        title: 'Unexpected error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
+      if (response.error) throw new Error(response.error.message);
+      toast({ title: 'Password reset!', description: 'You can now sign in.' });
+      setShowForgotPassword(false);
+      setShowPasswordOTP(false);
+      setPasswordOTP('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setForgotPasswordEmail('');
+    } catch (error: any) {
+      toast({ title: 'Reset failed', description: error.message, variant: 'destructive' });
     } finally {
       setIsResettingPassword(false);
     }
@@ -323,167 +232,104 @@ export default function Auth() {
     try {
       const { error } = await signInWithGoogle();
       if (error) {
-        toast({
-          title: 'Google sign in failed',
-          description: error.message || 'Failed to sign in with Google.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Google sign in failed', description: error.message, variant: 'destructive' });
         setIsGoogleLoading(false);
       }
     } catch (error) {
-      toast({
-        title: 'Unexpected error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
+      toast({ title: 'Unexpected error', variant: 'destructive' });
       setIsGoogleLoading(false);
     }
   };
 
-  const handleClose = () => {
-    const redirectTo = searchParams.get('redirectTo');
-    if (redirectTo) {
-      navigate(redirectTo);
-    } else {
-      navigate('/');
-    }
-  };
-
-  // Password reset flow UI
-  if (isPasswordResetFlow) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-        <Header />
-        <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-8">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Reset Your Password</CardTitle>
-              <CardDescription>Enter your new password below</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="Enter new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={isResettingPassword}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isResettingPassword}
-                />
-              </div>
-              <Button
-                onClick={handlePasswordReset}
-                disabled={isResettingPassword || !newPassword || !confirmPassword}
-                className="w-full"
-              >
-                {isResettingPassword ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Resetting password...
-                  </>
-                ) : (
-                  'Reset Password'
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Main auth UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       <Header />
       <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-8">
         <Card className="w-full max-w-md">
-          {showVerificationBanner && (
-            <Alert className="mb-4 border-primary/20 bg-primary/5">
-              <CheckCircle className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-sm">
-                <div className="font-medium mb-1">Check your email!</div>
-                <div className="text-muted-foreground">
-                  We sent a verification link to <span className="font-medium text-foreground">{userEmail}</span>.
-                  Click the link to activate your account.
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {showForgotPassword ? (
+          {showSignupOTP ? (
             <>
               <CardHeader>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-fit -ml-2 mb-2"
-                  onClick={() => setShowForgotPassword(false)}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to sign in
+                <Button variant="ghost" size="sm" className="w-fit -ml-2 mb-2" onClick={() => { setShowSignupOTP(false); setSignupOTP(''); setActiveTab('signup'); }}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />Back
                 </Button>
-                <CardTitle>Reset Password</CardTitle>
-                <CardDescription>
-                  Enter your email address and we'll send you a password reset link.
-                </CardDescription>
+                <CardTitle>Verify Email</CardTitle>
+                <CardDescription>Enter the 6-digit code sent to {userEmail}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="forgot-email">Email</Label>
-                  <Input
-                    id="forgot-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={forgotPasswordEmail}
-                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                    disabled={isSendingReset}
-                  />
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={signupOTP} onChange={setSignupOTP} disabled={isLoading}>
+                    <InputOTPGroup>
+                      {[0,1,2,3,4,5].map(i => <InputOTPSlot key={i} index={i} />)}
+                    </InputOTPGroup>
+                  </InputOTP>
                 </div>
-                <Button
-                  onClick={handleForgotPassword}
-                  disabled={isSendingReset || !forgotPasswordEmail}
-                  className="w-full"
-                >
-                  {isSendingReset ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending reset link...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Reset Link
-                    </>
-                  )}
+                <Button onClick={handleVerifySignupOTP} disabled={isLoading || signupOTP.length !== 6} className="w-full">
+                  {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Verifying...</> : 'Verify & Create Account'}
                 </Button>
+                <div className="text-center text-sm">
+                  {otpTimer > 0 ? <div className="flex items-center justify-center gap-2 text-muted-foreground"><Timer className="h-4 w-4" />Resend in {otpTimer}s</div> : 
+                  <Button variant="link" className="px-0" onClick={handleResendSignupOTP} disabled={isLoading}>Resend code</Button>}
+                </div>
+              </CardContent>
+            </>
+          ) : showForgotPassword && showPasswordOTP ? (
+            <>
+              <CardHeader>
+                <Button variant="ghost" size="sm" className="w-fit -ml-2 mb-2" onClick={() => { setShowPasswordOTP(false); setPasswordOTP(''); setShowForgotPassword(false); }}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />Back
+                </Button>
+                <CardTitle>Reset Password</CardTitle>
+                <CardDescription>Enter the 6-digit code sent to {forgotPasswordEmail} and your new password.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-center">
+                  <InputOTP maxLength={6} value={passwordOTP} onChange={setPasswordOTP} disabled={isResettingPassword}>
+                    <InputOTPGroup>
+                      {[0,1,2,3,4,5].map(i => <InputOTPSlot key={i} index={i} />)}
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                <Input
+                  type="password"
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isResettingPassword}
+                />
+                <Input
+                  type="password"
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isResettingPassword}
+                />
+                {newPassword !== confirmPassword && (
+                  <Alert variant="destructive">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>Passwords do not match.</AlertDescription>
+                  </Alert>
+                )}
+                <Button onClick={handleVerifyPasswordOTP} disabled={isResettingPassword || passwordOTP.length !== 6 || newPassword !== confirmPassword} className="w-full">
+                  {isResettingPassword ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Resetting...</> : 'Reset Password'}
+                </Button>
+                <div className="text-center text-sm">
+                  {otpTimer > 0 ? <div className="flex items-center justify-center gap-2 text-muted-foreground"><Timer className="h-4 w-4" />Resend in {otpTimer}s</div> : 
+                  <Button variant="link" className="px-0" onClick={handleForgotPassword} disabled={isSendingReset}>Resend code</Button>}
+                </div>
               </CardContent>
             </>
           ) : (
             <>
               <CardHeader>
                 <CardTitle>Welcome</CardTitle>
-                <CardDescription>Sign in to your account or create a new one</CardDescription>
+                <CardDescription>Sign in or create account</CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="signin">Sign In</TabsTrigger>
                     <TabsTrigger value="signup">Sign Up</TabsTrigger>
                   </TabsList>
-
                   <TabsContent value="signin" className="space-y-4">
                     <Form {...signInForm}>
                       <form onSubmit={signInForm.handleSubmit(handleSignIn)} className="space-y-4">
@@ -494,10 +340,7 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Email</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="you@example.com" className="pl-9" {...field} />
-                                </div>
+                                <Input placeholder="mail@example.com" type="email" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -510,63 +353,22 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Password</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input type="password" placeholder="••••••••" className="pl-9" {...field} />
-                                </div>
+                                <Input type="password" placeholder="Password" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="px-0 text-sm"
-                          onClick={() => setShowForgotPassword(true)}
-                        >
-                          Forgot password?
-                        </Button>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Signing in...
-                            </>
-                          ) : (
-                            'Sign In'
-                          )}
+                        <Button disabled={isLoading} className="w-full" type="submit">
+                          {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing In...</> : <><Lock className="mr-2 h-4 w-4" />Sign In</>}
                         </Button>
                       </form>
                     </Form>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <Separator />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleGoogleSignIn}
-                      disabled={isGoogleLoading}
-                    >
-                      {isGoogleLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        <>
-                          <Chrome className="mr-2 h-4 w-4" />
-                          Google
-                        </>
-                      )}
+                    <Button variant="outline" disabled={isGoogleLoading} className="w-full" onClick={handleGoogleSignIn}>
+                      {isGoogleLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing In...</> : <><Chrome className="mr-2 h-4 w-4" />Sign In with Google</>}
                     </Button>
+                    <Separator />
+                    <Button variant="link" className="px-0 w-fit" onClick={() => setShowForgotPassword(true)}>Forgot password?</Button>
                   </TabsContent>
 
                   <TabsContent value="signup" className="space-y-4">
@@ -579,69 +381,7 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Email</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="you@example.com" className="pl-9" {...field} />
-                                </div>
-                              </FormControl>
-                              {isCheckingEmail && (
-                                <FormDescription className="flex items-center gap-1 text-xs">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Checking availability...
-                                </FormDescription>
-                              )}
-                              {emailExists === true && (
-                                <FormDescription className="text-xs text-destructive">
-                                  This email is already registered
-                                </FormDescription>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="johndoe" className="pl-9" {...field} />
-                                </div>
-                              </FormControl>
-                              {isChecking && (
-                                <FormDescription className="flex items-center gap-1 text-xs">
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                  Checking availability...
-                                </FormDescription>
-                              )}
-                              {isAvailable === false && (
-                                <FormDescription className="text-xs text-destructive">
-                                  This username is already taken
-                                </FormDescription>
-                              )}
-                              {isAvailable === true && (
-                                <FormDescription className="text-xs text-primary">
-                                  ✓ Username available
-                                </FormDescription>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={signUpForm.control}
-                          name="fullName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Full Name</FormLabel>
-                              <FormControl>
-                                <div className="relative">
-                                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input placeholder="John Doe" className="pl-9" {...field} />
-                                </div>
+                                <Input placeholder="mail@example.com" type="email" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -654,64 +394,46 @@ export default function Auth() {
                             <FormItem>
                               <FormLabel>Password</FormLabel>
                               <FormControl>
-                                <div className="relative">
-                                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                  <Input type="password" placeholder="••••••••" className="pl-9" {...field} />
-                                </div>
+                                <Input type="password" placeholder="Password" {...field} />
                               </FormControl>
-                              <FormDescription className="text-xs">
-                                Must be at least 6 characters
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signUpForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Username</FormLabel>
+                              <FormControl>
+                                <Input placeholder="username" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                {isChecking ? 'Checking availability...' : isAvailable ? <span className="text-green-500">Available!</span> : <span className="text-red-500">Taken</span>}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        <Alert className="border-primary/20 bg-primary/5">
-                          <Info className="h-4 w-4" />
-                          <AlertDescription className="text-xs">
-                            You'll receive a verification email after signing up. Please check your inbox.
-                          </AlertDescription>
-                        </Alert>
-                        <Button type="submit" className="w-full" disabled={isLoading || emailExists === true}>
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Creating account...
-                            </>
-                          ) : (
-                            'Sign Up'
+                        <FormField
+                          control={signUpForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Full Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="John Doe" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
+                        />
+                        <Button disabled={isLoading || isChecking || !isAvailable} className="w-full" type="submit">
+                          {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating Account...</> : <><User className="mr-2 h-4 w-4" />Create Account</>}
                         </Button>
                       </form>
                     </Form>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <Separator />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleGoogleSignIn}
-                      disabled={isGoogleLoading}
-                    >
-                      {isGoogleLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        <>
-                          <Chrome className="mr-2 h-4 w-4" />
-                          Google
-                        </>
-                      )}
-                    </Button>
                   </TabsContent>
                 </Tabs>
               </CardContent>
@@ -722,3 +444,4 @@ export default function Auth() {
     </div>
   );
 }
+
