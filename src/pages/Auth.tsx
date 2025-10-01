@@ -410,7 +410,10 @@ export default function Auth() {
                                 <Input placeholder="username" {...field} />
                               </FormControl>
                               <FormDescription>
-                                {isChecking ? 'Checking availability...' : isAvailable ? <span className="text-green-500">Available!</span> : <span className="text-red-500">Taken</span>}
+                                {isChecking ? 'Checking availability...' : 
+                                 isAvailable === true ? <span className="text-green-500">✓ Available!</span> : 
+                                 isAvailable === false ? <span className="text-red-500">✗ Taken</span> : 
+                                 currentUsername.length >= 3 ? 'Checking...' : 'Must be at least 3 characters'}
                               </FormDescription>
                               <FormMessage />
                             </FormItem>
