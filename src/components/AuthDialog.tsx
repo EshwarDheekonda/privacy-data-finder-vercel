@@ -39,15 +39,37 @@ type SignInFormData = z.infer<typeof signInSchema>;
 export const AuthDialog = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { signIn, signInWithGoogle, signUp, user } = useAuth();
+  const { signIn, signInWithGoogle, signUp, verifyOTP, resetPasswordForEmail, updatePassword, user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [otpTimer, setOtpTimer] = useState(0);
 
   const authMode = searchParams.get('auth');
-  const isOpen = authMode === 'signin' || authMode === 'signup';
+  const isOpen = authMode === 'signin' || authMode === 'signup' || authMode === 'reset';
   const activeTab = authMode === 'signup' ? 'signup' : 'signin';
+
+  // Handle password reset mode
+  useEffect(() => {
+    if (authMode === 'reset' && !showPasswordReset) {
+      setShowPasswordReset(true);
+    }
+  }, [authMode]);
+
+  // OTP timer countdown
+  useEffect(() => {
+    if (otpTimer > 0) {
+      const timer = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpTimer]);
 
   const signUpForm = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -85,6 +107,11 @@ export const AuthDialog = () => {
     searchParams.delete('auth');
     setSearchParams(searchParams);
     setShowForgotPassword(false);
+    setShowOTPVerification(false);
+    setShowPasswordReset(false);
+    setOtp('');
+    setNewPassword('');
+    setConfirmNewPassword('');
   };
 
   const handleTabChange = (value: string) => {
@@ -103,15 +130,87 @@ export const AuthDialog = () => {
           variant: 'destructive',
         });
       } else {
+        setSignupEmail(data.email);
+        setShowOTPVerification(true);
+        setOtpTimer(60);
         toast({
-          title: 'Account created successfully!',
+          title: 'Verification code sent!',
+          description: 'Check your email for the 6-digit verification code.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Sign up failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (otp.length !== 6) {
+      toast({
+        title: 'Invalid OTP',
+        description: 'Please enter a 6-digit code',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await verifyOTP(signupEmail, otp, 'signup');
+      
+      if (error) {
+        toast({
+          title: 'Verification failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Account verified!',
           description: 'Welcome to PrivacyGuard. You can now start assessing privacy risks.',
         });
         handleClose();
       }
     } catch (error: any) {
       toast({
-        title: 'Sign up failed',
+        title: 'Verification failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: signupEmail,
+      });
+      
+      if (error) {
+        toast({
+          title: 'Failed to resend code',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        setOtpTimer(60);
+        toast({
+          title: 'Code resent!',
+          description: 'Check your email for a new verification code.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Failed to resend code',
         description: error.message,
         variant: 'destructive',
       });
@@ -161,10 +260,7 @@ export const AuthDialog = () => {
 
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/auth?mode=reset`;
-      const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: redirectUrl,
-      });
+      const { error } = await resetPasswordForEmail(forgotPasswordEmail);
 
       if (error) {
         toast({
@@ -174,7 +270,7 @@ export const AuthDialog = () => {
         });
       } else {
         toast({
-          title: 'Password reset email sent!',
+          title: 'Password reset link sent!',
           description: 'Check your email for a password reset link.',
         });
         setShowForgotPassword(false);
@@ -183,6 +279,54 @@ export const AuthDialog = () => {
     } catch (error: any) {
       toast({
         title: 'Password reset failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please make sure both passwords match',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 8 characters',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await updatePassword(newPassword);
+
+      if (error) {
+        toast({
+          title: 'Password update failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Password updated!',
+          description: 'Your password has been successfully updated.',
+        });
+        handleClose();
+        navigate('/');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Password update failed',
         description: error.message,
         variant: 'destructive',
       });
@@ -216,7 +360,115 @@ export const AuthDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        {showForgotPassword ? (
+        {showPasswordReset ? (
+          <div className="space-y-6">
+            <DialogHeader>
+              <DialogTitle>Reset Your Password</DialogTitle>
+              <DialogDescription>
+                Enter your new password below
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                <Input
+                  id="confirm-new-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : showOTPVerification ? (
+          <div className="space-y-6">
+            <DialogHeader>
+              <DialogTitle>Verify Your Email</DialogTitle>
+              <DialogDescription>
+                We've sent a 6-digit code to {signupEmail}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Verification Code</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                  className="text-center text-2xl tracking-widest"
+                />
+              </div>
+              <Button
+                onClick={handleVerifyOTP}
+                disabled={isLoading || otp.length !== 6}
+                className="w-full"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify Code'
+                )}
+              </Button>
+              <div className="text-center">
+                {otpTimer > 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Resend code in {otpTimer}s
+                  </p>
+                ) : (
+                  <Button
+                    variant="link"
+                    onClick={handleResendOTP}
+                    disabled={isLoading}
+                    className="text-sm"
+                  >
+                    Resend verification code
+                  </Button>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowOTPVerification(false);
+                  setOtp('');
+                }}
+                className="w-full"
+              >
+                Back to Sign Up
+              </Button>
+            </div>
+          </div>
+        ) : showForgotPassword ? (
           <div className="space-y-6">
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>

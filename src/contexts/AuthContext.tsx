@@ -7,8 +7,11 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signUp: (email: string, password: string, username: string, fullName: string) => Promise<{ error: any }>;
+  verifyOTP: (email: string, otp: string, type: 'signup' | 'recovery') => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signInWithGoogle: () => Promise<{ error: any }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: any }>;
+  updatePassword: (newPassword: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
 }
 
@@ -80,18 +83,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, [DEBUG_UI]);
 
   const signUp = async (email: string, password: string, username: string, fullName: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
           username,
           full_name: fullName,
         }
       }
+    });
+    return { error };
+  };
+
+  const verifyOTP = async (email: string, otp: string, type: 'signup' | 'recovery') => {
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: type === 'signup' ? 'signup' : 'recovery',
+    });
+    return { error };
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/?auth=reset`,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
     });
     return { error };
   };
@@ -124,8 +148,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     session,
     loading,
     signUp,
+    verifyOTP,
     signIn,
     signInWithGoogle,
+    resetPasswordForEmail,
+    updatePassword,
     signOut,
   };
 
