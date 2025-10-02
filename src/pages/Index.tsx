@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { HeroSection, HeroSectionRef } from '@/components/HeroSection';
 import { TrustSection } from '@/components/TrustSection';
@@ -15,6 +16,7 @@ const Index = () => {
   
   const heroRef = useRef<HeroSectionRef>(null);
   const [renderStatus, setRenderStatus] = useState<string[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (DEBUG_UI) {
@@ -35,7 +37,7 @@ const Index = () => {
 
   const handleGetStartedClick = () => {
     if (DEBUG_UI) console.log("🔘 Get Started clicked");
-    heroRef.current?.focusSearchInput();
+    setSearchParams({ auth: 'signup' });
   };
 
   if (DEBUG_UI) console.log("🔄 Index.tsx: Rendering with status:", renderStatus);
