@@ -6,6 +6,7 @@ import { HowItWorksSection } from '@/components/HowItWorksSection';
 import { FeaturesSection } from '@/components/FeaturesSection';
 import { UseCasesSection } from '@/components/UseCasesSection';
 import { FooterSection } from '@/components/FooterSection';
+import { AuthDialog } from '@/components/AuthDialog';
 
 const Index = () => {
   const DEBUG_UI = import.meta.env.VITE_DEBUG_UI === 'true' || 
@@ -113,6 +114,7 @@ const Index = () => {
           <FeaturesSection />
           <UseCasesSection onGetStartedClick={handleGetStartedClick} />
           <FooterSection />
+          <AuthDialog />
         </>
       )}
     </div>
