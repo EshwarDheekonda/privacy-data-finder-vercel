@@ -55,47 +55,28 @@ export const ResultCard = ({ result }: ResultCardProps) => {
       onClick={handleCardClick}
     >
       <CardHeader className="px-4 sm:px-6 py-5 sm:py-4 pb-4 sm:pb-3">
-        <div className="flex flex-col gap-3">
-          {/* Mobile: Risk badge at top, Desktop: Risk badge on right */}
-          <Badge className={cn(
-            "text-sm py-2 px-3 font-medium self-start w-fit sm:hidden",
-            getRiskColor(result.risk_level)
-          )}>
-            {getRiskIcon(result.risk_level)}
-            <span className="ml-1 capitalize whitespace-nowrap">{result.risk_level}</span>
-          </Badge>
-
-          <div className="flex items-start gap-4 sm:gap-3 w-full">
-            <div className="p-2 -m-2">
-              <Checkbox
-                checked={selected}
-                onCheckedChange={() => toggleResult(result.id)}
-                onClick={(e) => e.stopPropagation()}
-                className="h-5 w-5 sm:h-4 sm:w-4 shrink-0"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg leading-snug sm:text-lg font-semibold break-words mb-3 sm:mb-2">
-                {result.title || result.name}
-              </CardTitle>
-              <CardDescription className="flex items-center gap-2 flex-wrap text-sm sm:text-sm leading-relaxed">
-                <Globe className="w-4 h-4 shrink-0" />
-                <span className="truncate">{result.source}</span>
-              </CardDescription>
-              {result.snippet && (
-                <p className="text-sm text-muted-foreground mt-2.5 line-clamp-2 leading-relaxed">
-                  {result.snippet}
-                </p>
-              )}
-            </div>
-            {/* Desktop: Risk badge on right */}
-            <Badge className={cn(
-              "text-sm px-3 py-1.5 font-medium shrink-0 hidden sm:flex",
-              getRiskColor(result.risk_level)
-            )}>
-              {getRiskIcon(result.risk_level)}
-              <span className="ml-1 capitalize whitespace-nowrap">{result.risk_level}</span>
-            </Badge>
+        <div className="flex items-start gap-4 sm:gap-3 w-full">
+          <div className="p-2 -m-2">
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => toggleResult(result.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 w-5 sm:h-4 sm:w-4 shrink-0"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg leading-snug sm:text-lg font-semibold break-words mb-3 sm:mb-2">
+              {result.title || result.name}
+            </CardTitle>
+            <CardDescription className="flex items-center gap-2 flex-wrap text-sm sm:text-sm leading-relaxed">
+              <Globe className="w-4 h-4 shrink-0" />
+              <span className="truncate">{result.source}</span>
+            </CardDescription>
+            {result.snippet && (
+              <p className="text-sm text-muted-foreground mt-2.5 line-clamp-2 leading-relaxed">
+                {result.snippet}
+              </p>
+            )}
           </div>
         </div>
       </CardHeader>
