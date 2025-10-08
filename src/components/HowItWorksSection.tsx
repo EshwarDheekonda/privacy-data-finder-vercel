@@ -53,10 +53,10 @@ export const HowItWorksSection = () => {
               </div>
 
               {/* Step Card */}
-              <div className="glass-card p-8 h-full interactive-hover animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
+              <div className="glass-card p-8 pt-10 h-full interactive-hover animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
 
                 {/* Icon */}
-                <div className="w-16 h-16 bg-gradient-secondary rounded-2xl flex items-center justify-center mb-6">
+                <div className="w-16 h-16 bg-gradient-secondary rounded-2xl flex items-center justify-center mb-6 mt-2">
                   <step.icon className="w-8 h-8 text-white" />
                 </div>
 
