@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BackendAnalysisResponse } from '@/lib/api';
-import { PII_CATEGORIES } from '@/types/enhanced-backend';
 import { 
   Shield, 
   AlertTriangle, 
@@ -10,22 +9,12 @@ import {
   Eye, 
   Lock,
   Unlock,
-  Target,
   Zap
 } from 'lucide-react';
 import { 
   RadialBarChart, 
   RadialBar, 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell
+  ResponsiveContainer
 } from 'recharts';
 import { motion } from 'framer-motion';
 
@@ -46,40 +35,6 @@ export const EnhancedRiskAssessment = ({ data }: EnhancedRiskAssessmentProps) =>
     }
   ];
 
-  // Calculate category risk breakdown
-  const categoryRisks = Object.entries(PII_CATEGORIES).map(([categoryName, fields]) => {
-    const foundItems = fields.reduce((count, field) => {
-      const value = data[field as keyof BackendAnalysisResponse];
-      return count + (Array.isArray(value) ? value.length : 0);
-    }, 0);
-
-    // Calculate risk weight based on category sensitivity
-    const riskWeights = {
-      sensitive_docs: 5,
-      personal: 3,
-      contact: 2,
-      professional: 2,
-      social_media: 1,
-      family: 4,
-      digital: 1
-    };
-
-    const risk = foundItems * (riskWeights[categoryName as keyof typeof riskWeights] || 1);
-    
-    return {
-      name: categoryName.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      items: foundItems,
-      risk: risk,
-      fill: risk >= 15 ? '#ef4444' : risk >= 10 ? '#f97316' : risk >= 5 ? '#eab308' : '#22c55e'
-    };
-  }).filter(cat => cat.items > 0);
-
-  // Risk evolution simulation (would come from historical data)
-  const riskEvolution = [
-    { period: 'Initial', score: Math.max(1, riskScore - 3) },
-    { period: 'Current', score: riskScore },
-    { period: 'Projected', score: Math.min(15, riskScore + 1) }
-  ];
 
   // Privacy exposure levels
   const exposureLevels = [
@@ -175,29 +130,6 @@ export const EnhancedRiskAssessment = ({ data }: EnhancedRiskAssessmentProps) =>
         </CardContent>
       </Card>
 
-      {/* Category Risk Breakdown */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Risk by Data Category
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-96 sm:h-80 md:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryRisks} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" style={{ fontSize: '14px' }} />
-                <YAxis dataKey="name" type="category" width={140} style={{ fontSize: '14px' }} />
-                <Tooltip />
-                <Bar dataKey="risk" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Privacy Exposure Levels */}
         <Card>
@@ -274,31 +206,6 @@ export const EnhancedRiskAssessment = ({ data }: EnhancedRiskAssessmentProps) =>
         </Card>
       </div>
 
-      {/* Risk Evolution Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Risk Evolution
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={riskEvolution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis domain={[0, 15]} />
-                <Tooltip />
-                <Bar dataKey="score" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 text-sm text-muted-foreground">
-            Risk trend analysis based on current data patterns and typical privacy exposure progression.
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
