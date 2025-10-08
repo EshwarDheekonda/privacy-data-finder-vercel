@@ -1,17 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { BackendAnalysisResponse } from '@/lib/api';
 import { PII_CATEGORIES } from '@/types/enhanced-backend';
 import { 
-  TrendingUp, 
   AlertTriangle, 
-  CheckCircle, 
-  ExternalLink,
+  CheckCircle,
   Shield,
-  Database,
-  Globe,
-  Users
+  Database
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -67,19 +62,6 @@ export const ExecutiveSummary = ({ data }: ExecutiveSummaryProps) => {
     return findings.slice(0, 5); // Top 5 findings
   };
 
-  // Source performance breakdown
-  const sourcePerformanceData = [
-    {
-      name: 'Successful',
-      value: data.extraction_summary?.successful_extractions || 0,
-      fill: '#10b981'
-    },
-    {
-      name: 'Failed',
-      value: data.extraction_summary?.failed_extractions || 0,
-      fill: '#ef4444'
-    }
-  ];
 
   // Quick actions based on risk level
   const getQuickActions = () => {
@@ -166,68 +148,29 @@ export const ExecutiveSummary = ({ data }: ExecutiveSummaryProps) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Key Findings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="w-5 h-5" />
-              Key Findings
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {keyFindings.length > 0 ? (
-                keyFindings.map((finding, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground">{finding}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground">No significant findings detected.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Source Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Source Performance
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="h-24">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sourcePerformanceData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={40}
-                      dataKey="value"
-                    >
-                      {sourcePerformanceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  {data.extraction_summary?.successful_extractions || 0} successful out of {data.extraction_summary?.total_sources || 0} sources
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Key Findings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="w-5 h-5" />
+            Key Findings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {keyFindings.length > 0 ? (
+              keyFindings.map((finding, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-muted-foreground">{finding}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No significant findings detected.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Card>
@@ -245,9 +188,6 @@ export const ExecutiveSummary = ({ data }: ExecutiveSummaryProps) => {
                   {index + 1}
                 </div>
                 <p className="text-sm flex-1">{action}</p>
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
               </div>
             ))}
           </div>
