@@ -219,14 +219,7 @@ export const EnhancedRecommendations = ({ data }: EnhancedRecommendationsProps) 
                           </Badge>
                         </div>
                         <p className="text-sm mb-2">{action.description}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          {action.timeframe}
-                        </div>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Mark Complete
-                      </Button>
                     </div>
                   </motion.div>
                 );
@@ -309,10 +302,6 @@ export const EnhancedRecommendations = ({ data }: EnhancedRecommendationsProps) 
                           </div>
                         ))}
                       </div>
-                      <Button variant="outline" size="sm" className="w-full mt-4">
-                        <ExternalLink className="w-3 h-3 mr-2" />
-                        Open Privacy Settings
-                      </Button>
                     </CardContent>
                   </Card>
                 </motion.div>
