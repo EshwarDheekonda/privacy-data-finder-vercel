@@ -81,9 +81,9 @@ export const ExtractDetailsSection = ({ searchQuery, allResults }: ExtractDetail
 
   const getButtonText = () => {
     if (isExtracting) return 'Processing...';
-    if (selectedCount === 0) return 'Select Results to Extract Details';
-    if (isHovered) return 'Deep scan → Content analysis → Risk assessment → Generate report';
-    return `Extract Details (${selectedCount} selected)`;
+    if (selectedCount === 0) return 'Select Results';
+    if (isHovered) return `Analyze ${selectedCount} Result${selectedCount > 1 ? 's' : ''}`;
+    return `Extract Details (${selectedCount})`;
   };
 
   const getButtonIcon = () => {
@@ -99,11 +99,11 @@ export const ExtractDetailsSection = ({ searchQuery, allResults }: ExtractDetail
 
   return (
     <div className="mt-12 mb-8">
-      <div className="glass-card p-8 text-center">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="glass-card p-4 sm:p-6 md:p-8 text-center">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           <div className="space-y-2">
-            <h3 className="text-2xl font-bold">Ready for Deep Analysis?</h3>
-            <p className="text-muted-foreground">
+            <h3 className="text-xl sm:text-2xl font-bold">Ready for Deep Analysis?</h3>
+            <p className="text-sm sm:text-base text-muted-foreground px-2">
               Select the results you want to analyze and extract detailed privacy information
             </p>
           </div>
@@ -122,18 +122,18 @@ export const ExtractDetailsSection = ({ searchQuery, allResults }: ExtractDetail
             size="lg"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className="h-16 px-12 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 min-w-[400px]"
+            className="h-16 sm:h-14 md:h-16 px-6 sm:px-8 md:px-12 text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 w-full md:w-auto md:min-w-[400px]"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {getButtonIcon()}
-              <span className="transition-all duration-300">
+              <span className="transition-all duration-300 text-sm sm:text-base md:text-lg truncate">
                 {getButtonText()}
               </span>
             </div>
           </Button>
 
           {isHovered && selectedCount > 0 && !isExtracting && (
-            <div className="animate-fade-in mt-4">
+            <div className="animate-fade-in mt-4 hidden md:block">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Search className="w-4 h-4 text-primary" />
