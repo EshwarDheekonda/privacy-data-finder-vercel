@@ -17,7 +17,7 @@
 
     /* Enhanced Glass Morphism */
     --glass: 210 20% 12%;
-    --glass-border: 210 30% 22%;
+    --glass-border: 210 40% 30%;
     --glass-glow: 264 69% 55%;
     --glass-overlay: 210 20% 8%;
 
@@ -80,7 +80,7 @@
     --gradient-primary: linear-gradient(135deg, hsl(264 69% 52%), hsl(264 69% 68%));
     --gradient-secondary: linear-gradient(135deg, hsl(156 65% 48%), hsl(156 65% 70%));
     --gradient-hero: radial-gradient(ellipse at top, hsl(210 24% 4%), hsl(210 20% 7%));
-    --gradient-glass: linear-gradient(135deg, hsla(210, 20%, 12%, 0.85), hsla(210, 18%, 8%, 0.75));
+    --gradient-glass: linear-gradient(135deg, hsla(210, 30%, 8%, 0.25), hsla(210, 28%, 6%, 0.35));
     --gradient-glow: radial-gradient(circle at center, hsla(264, 69%, 52%, 0.4), transparent 70%);
     --gradient-warm: linear-gradient(135deg, hsl(215 20% 5%), hsl(220 18% 8%));
     --gradient-cool: linear-gradient(135deg, hsl(205 28% 4%), hsl(200 25% 7%));
@@ -193,7 +193,9 @@
 @layer components {
   /* Enhanced Glass Morphism Components */
   .glass-card {
-    @apply backdrop-blur-xl border;
+    @apply border;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
     background: var(--gradient-glass);
     border-color: hsl(var(--glass-border));
     box-shadow: var(--shadow-glass), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -210,6 +212,20 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, hsl(var(--primary-glow)), transparent);
     opacity: 0.6;
+  }
+
+  .glass-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, hsla(264, 69%, 52%, 0.03), transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glass-card > * {
+    position: relative;
+    z-index: 1;
   }
 
   .glass-button {
@@ -715,7 +731,16 @@
 
   /* Mobile-optimized components */
   @media (max-width: 768px) {
-    /* Text shadows removed - they caused contrast issues with light text on glass backgrounds */
+    .glass-card {
+      /* Slightly increase opacity only on mobile for readability */
+      background: linear-gradient(135deg, hsla(210, 30%, 8%, 0.35), hsla(210, 28%, 6%, 0.45));
+    }
+    
+    /* Enhance text readability with subtle backdrop */
+    .glass-card h3,
+    .glass-card .text-foreground {
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
     
     .result-card-mobile {
       padding: 1rem;
@@ -745,9 +770,9 @@
 
   @media (prefers-color-scheme: light) {
     .glass-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(245, 245, 250, 0.75));
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(245, 245, 250, 0.35));
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
   }
 }
