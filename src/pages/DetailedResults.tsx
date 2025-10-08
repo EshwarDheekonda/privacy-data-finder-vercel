@@ -358,41 +358,57 @@ const DetailedResults = () => {
                 </Card>
               </div>
             ) : (
-              <TabsList className="grid w-full grid-cols-3 xl:grid-cols-6 gap-2">
-                <TabsTrigger value="executive" className="text-xs px-2 py-2 min-h-[44px]">
-                  <Eye className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Executive</span>
+              <TabsList className="grid w-full grid-cols-3 xl:grid-cols-6 gap-2 h-auto bg-muted/50 p-2">
+                <TabsTrigger value="executive" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Executive</span>
+                  <span className="sm:hidden">Exec</span>
                 </TabsTrigger>
-                <TabsTrigger value="data-discovery" className="text-xs px-2 py-2 min-h-[44px]">
-                  <Database className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Data</span>
+                <TabsTrigger value="data-discovery" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <Database className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Data</span>
+                  <span className="sm:hidden">Data</span>
                 </TabsTrigger>
-                <TabsTrigger value="source-analysis" className="text-xs px-2 py-2 min-h-[44px]">
-                  <Globe className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Sources</span>
+                <TabsTrigger value="source-analysis" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <Globe className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Sources</span>
+                  <span className="sm:hidden">Src</span>
                 </TabsTrigger>
-                <TabsTrigger value="risk-assessment" className="text-xs px-2 py-2 min-h-[44px]">
-                  <Shield className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Risk</span>
+                <TabsTrigger value="risk-assessment" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <Shield className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Risk</span>
+                  <span className="sm:hidden">Risk</span>
                 </TabsTrigger>
-                <TabsTrigger value="recommendations" className="text-xs px-2 py-2 min-h-[44px]">
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Tips</span>
+                <TabsTrigger value="recommendations" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Tips</span>
+                  <span className="sm:hidden">Tips</span>
                 </TabsTrigger>
-                <TabsTrigger value="export" className="text-xs px-2 py-2 min-h-[44px]">
-                  <Download className="w-4 h-4 mr-1" />
-                  <span className="hidden lg:inline">Export</span>
+                <TabsTrigger value="export" className="text-xs sm:text-sm px-2 py-3 min-h-[44px] data-[state=active]:bg-background">
+                  <Download className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Export</span>
+                  <span className="sm:hidden">Export</span>
                 </TabsTrigger>
               </TabsList>
             )}
 
             {/* Tab 1: Executive Summary */}
             <TabsContent value="executive" className="mt-6 sm:mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  High-level overview of your privacy assessment, including risk score, key findings, and recommended actions.
+                </p>
+              </div>
               <ExecutiveSummary data={analysisData} />
             </TabsContent>
 
             {/* Tab 2: Data Discovery */}
             <TabsContent value="data-discovery" className="mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  Detailed breakdown of all personal information discovered across sources, organized by risk level and category.
+                </p>
+              </div>
               <div className="space-y-6">
                 {/* High-Risk Data Section */}
                 <Card className="border-l-4 border-l-red-500">
@@ -535,21 +551,41 @@ const DetailedResults = () => {
 
             {/* Tab 3: Source Analysis */}
             <TabsContent value="source-analysis" className="mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  Analysis of data sources where your information was found, including source types and data points collected.
+                </p>
+              </div>
               <SourceAnalysis data={analysisData} />
             </TabsContent>
 
             {/* Tab 4: Enhanced Risk Assessment */}
             <TabsContent value="risk-assessment" className="mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  Comprehensive risk assessment with privacy exposure levels and detailed risk factor analysis.
+                </p>
+              </div>
               <EnhancedRiskAssessment data={analysisData} />
             </TabsContent>
 
             {/* Tab 5: Enhanced Recommendations */}
             <TabsContent value="recommendations" className="mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  Personalized privacy recommendations and actionable steps to reduce your digital footprint and protect your information.
+                </p>
+              </div>
               <EnhancedRecommendations data={analysisData} />
             </TabsContent>
 
             {/* Tab 6: Enhanced Export & Sharing */}
             <TabsContent value="export" className="mt-6">
+              <div className="mb-6">
+                <p className="text-muted-foreground">
+                  Download your privacy assessment report in multiple formats or share results securely.
+                </p>
+              </div>
               <EnhancedExportShare data={analysisData} query={location.state?.query || ''} />
             </TabsContent>
           </Tabs>
