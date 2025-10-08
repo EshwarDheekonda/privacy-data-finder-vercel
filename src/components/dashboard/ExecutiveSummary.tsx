@@ -124,15 +124,15 @@ export const ExecutiveSummary = ({ data }: ExecutiveSummaryProps) => {
                 </div>
               </div>
             </div>
-            <div className="h-48 sm:h-40 md:h-32">
+            <div className="h-40">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={riskData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={60}
+                    cy="100%"
+                    innerRadius="50%"
+                    outerRadius="80%"
                     startAngle={180}
                     endAngle={0}
                     dataKey="value"
