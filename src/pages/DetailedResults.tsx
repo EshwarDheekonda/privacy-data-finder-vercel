@@ -410,39 +410,50 @@ const DetailedResults = () => {
                 </p>
               </div>
               <div className="space-y-6">
-                {/* High-Risk Data Section */}
-                <Card className="border-l-4 border-l-red-500">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-red-600">
-                      <AlertTriangle className="w-5 h-5" />
-                      High-Risk Data
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {PII_CATEGORIES.sensitive_docs.map(category => {
-                        const data = analysisData[category as keyof BackendAnalysisResponse];
-                        if (Array.isArray(data) && data.length > 0) {
-                          return (
-                            <Card key={category} className="bg-red-50 border-red-200">
-                              <CardContent className="p-4">
-                                <h4 className="font-semibold text-red-700 mb-2">{category}</h4>
-                                <div className="space-y-1">
-                                  {data.map((item, index) => (
-                                    <Badge key={index} variant="destructive" className="mr-2 mb-1">
-                                      {category === 'SSN' || category === 'Credit Card' ? '***MASKED***' : item}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        }
-                        return null;
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* High-Risk Data Section - Only shown if high-risk data exists */}
+                {(() => {
+                  const hasHighRiskData = PII_CATEGORIES.sensitive_docs.some(category => {
+                    const data = analysisData[category as keyof BackendAnalysisResponse];
+                    return Array.isArray(data) && data.length > 0;
+                  });
+                  
+                  if (!hasHighRiskData) return null;
+                  
+                  return (
+                    <Card className="border-l-4 border-l-red-500">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-red-600">
+                          <AlertTriangle className="w-5 h-5" />
+                          High-Risk Data
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {PII_CATEGORIES.sensitive_docs.map(category => {
+                            const data = analysisData[category as keyof BackendAnalysisResponse];
+                            if (Array.isArray(data) && data.length > 0) {
+                              return (
+                                <Card key={category} className="bg-red-50 border-red-200">
+                                  <CardContent className="p-4">
+                                    <h4 className="font-semibold text-red-700 mb-2">{category}</h4>
+                                    <div className="space-y-1">
+                                      {data.map((item, index) => (
+                                        <Badge key={index} variant="destructive" className="mr-2 mb-1">
+                                          {category === 'SSN' || category === 'Credit Card' ? '***MASKED***' : item}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            }
+                            return null;
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
 
                 {/* Personal Information Section */}
                 <Card>
