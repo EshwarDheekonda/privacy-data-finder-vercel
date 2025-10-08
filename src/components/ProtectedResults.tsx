@@ -54,29 +54,6 @@ export const ProtectedResults = ({ children, searchQuery, resultsCount }: Protec
 
   return (
     <div className="space-y-6">
-      {/* Results Found Banner */}
-      <Card className="glass-card border-destructive/30 bg-destructive/5">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-lg bg-destructive/20 flex items-center justify-center">
-                <Shield className="h-6 w-6 text-destructive" />
-              </div>
-              <div>
-                <CardTitle className="text-destructive">Critical Data Found</CardTitle>
-                <CardDescription>
-                  We discovered {resultsCount || 'multiple'} sources containing your personal information
-                  {searchQuery && ` for "${searchQuery}"`}
-                </CardDescription>
-              </div>
-            </div>
-            <Badge variant="destructive" className="text-sm">
-              {resultsCount || '10+'} Results
-            </Badge>
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Blocked Results Display */}
       <div className="relative">
         <div className="blur-sm pointer-events-none select-none">
