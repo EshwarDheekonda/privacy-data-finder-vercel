@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Download, Share, AlertTriangle, Shield, Eye, Globe, Users, FileText, Settings, TrendingUp, Database } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 const DetailedResults = () => {
   const location = useLocation();
@@ -336,32 +337,27 @@ const DetailedResults = () => {
           {/* Enhanced Tabbed Content */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             {isMobile ? (
-              <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm pb-4 -mx-4 px-4 border-b mb-6">
-                <Select value={activeTab} onValueChange={setActiveTab}>
-                  <SelectTrigger className="w-full h-14 px-4 text-base flex items-center gap-3 bg-background shadow-sm">
-                    <SelectValue>
-                      {(() => {
-                        const currentTab = tabOptions.find(t => t.value === activeTab);
-                        return currentTab ? (
-                          <div className="flex items-center gap-2">
-                            <currentTab.icon className="w-4 h-4" />
-                            <span>{currentTab.label}</span>
-                          </div>
-                        ) : null;
-                      })()}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[70vh] z-[100]">
-                    {tabOptions.map((tab) => (
-                      <SelectItem key={tab.value} value={tab.value} className="py-4 text-base">
-                        <div className="flex items-center gap-3">
-                          <tab.icon className="w-5 h-5" />
-                          <span>{tab.label}</span>
-                        </div>
-                      </SelectItem>
+              <div className="mb-6">
+                <Card className="glass-card">
+                  <CardContent className="p-0">
+                    {tabOptions.map((tab, index) => (
+                      <button
+                        key={tab.value}
+                        onClick={() => setActiveTab(tab.value)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-4 py-4 text-left transition-colors",
+                          activeTab === tab.value 
+                            ? "bg-primary/10 text-primary border-l-4 border-primary" 
+                            : "hover:bg-muted/50 border-l-4 border-transparent",
+                          index !== tabOptions.length - 1 && "border-b border-border/50"
+                        )}
+                      >
+                        <tab.icon className="w-5 h-5 shrink-0" />
+                        <span className="font-medium">{tab.label}</span>
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </CardContent>
+                </Card>
               </div>
             ) : (
               <TabsList className="grid w-full grid-cols-4 xl:grid-cols-7 gap-2">
