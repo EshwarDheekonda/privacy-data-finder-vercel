@@ -38,21 +38,22 @@ export const HowItWorksSection = () => {
         {/* Steps */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {steps.map((step, index) => (
-            <div key={index} className="relative">
+            <div key={index} className="relative pt-8">
+              {/* Step Number - Outside card */}
+              <div 
+                className="absolute top-2 left-2 w-16 h-16 rounded-full flex items-center justify-center font-black text-3xl shadow-2xl z-20"
+                style={{
+                  background: '#ffffff',
+                  color: '#8a71ff',
+                  border: '4px solid #8a71ff',
+                  boxShadow: '0 8px 24px rgba(138, 113, 255, 0.5), 0 0 40px rgba(138, 113, 255, 0.3)'
+                }}
+              >
+                {index + 1}
+              </div>
+
               {/* Step Card */}
               <div className="glass-card p-8 h-full interactive-hover animate-scale-in" style={{ animationDelay: `${index * 0.2}s` }}>
-                {/* Step Number */}
-                <div 
-                  className="absolute -top-6 -left-6 w-16 h-16 rounded-full flex items-center justify-center font-black text-3xl shadow-2xl z-20"
-                  style={{
-                    background: '#ffffff',
-                    color: '#8a71ff',
-                    border: '4px solid #8a71ff',
-                    boxShadow: '0 8px 24px rgba(138, 113, 255, 0.5), 0 0 40px rgba(138, 113, 255, 0.3)'
-                  }}
-                >
-                  {index + 1}
-                </div>
 
                 {/* Icon */}
                 <div className="w-16 h-16 bg-gradient-secondary rounded-2xl flex items-center justify-center mb-6">
