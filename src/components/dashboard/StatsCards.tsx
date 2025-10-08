@@ -1,15 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { BackendAnalysisResponse } from '@/lib/api';
 import { 
   Globe, 
-  TrendingUp, 
-  Clock, 
   Database, 
   Shield, 
-  Tag,
-  CheckCircle,
-  XCircle
+  Tag
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -18,24 +13,8 @@ interface StatsCardsProps {
 }
 
 export const StatsCards = ({ data }: StatsCardsProps) => {
-  const successRate = data.extraction_summary 
-    ? Math.round((data.extraction_summary.successful_extractions / data.extraction_summary.total_sources) * 100)
-    : 0;
-
-  const getSuccessRateBadge = (rate: number) => {
-    if (rate >= 80) return 'bg-green-100 text-green-600';
-    if (rate >= 60) return 'bg-yellow-100 text-yellow-600';
-    return 'bg-red-100 text-red-600';
-  };
-
-  const getEfficiencyBadge = (time: number) => {
-    if (time <= 30) return 'bg-green-100 text-green-600';
-    if (time <= 60) return 'bg-yellow-100 text-yellow-600';
-    return 'bg-red-100 text-red-600';
-  };
-
   const cards = [
-    // Row 1: Performance Metrics
+    // Row 1: Core Metrics
     {
       title: 'Sources Processed',
       value: data.extraction_summary?.total_sources || 0,
@@ -43,23 +22,6 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
       icon: Globe,
       color: 'bg-blue-100 text-blue-600'
     },
-    {
-      title: 'Success Rate',
-      value: `${successRate}%`,
-      subtitle: `${data.extraction_summary?.successful_extractions || 0}/${data.extraction_summary?.total_sources || 0} successful`,
-      icon: successRate >= 80 ? CheckCircle : XCircle,
-      color: getSuccessRateBadge(successRate),
-      badge: successRate >= 80 ? 'High Efficiency' : successRate >= 60 ? 'Moderate' : 'Needs Attention'
-    },
-    {
-      title: 'Processing Time',
-      value: `${data.extraction_summary?.extraction_time || 0}s`,
-      subtitle: `${(data.extraction_summary?.extraction_time || 0) < 60 ? 'Fast' : 'Standard'} processing speed`,
-      icon: Clock,
-      color: getEfficiencyBadge(data.extraction_summary?.extraction_time || 0),
-      badge: (data.extraction_summary?.extraction_time || 0) <= 30 ? 'Optimized' : 'Standard'
-    },
-    // Row 2: Data Discovery
     {
       title: 'PII Items Found',
       value: data.pii_summary?.total_items || 0,
@@ -107,14 +69,7 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
                   <card.icon className="w-6 h-6 sm:w-5 sm:h-5 lg:w-4 lg:h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-4xl sm:text-3xl lg:text-2xl font-bold">{card.value}</p>
-                    {card.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {card.badge}
-                      </Badge>
-                    )}
-                  </div>
+                  <p className="text-4xl sm:text-3xl lg:text-2xl font-bold">{card.value}</p>
                   <p className="text-base sm:text-sm text-muted-foreground font-medium">
                     {card.title}
                   </p>
