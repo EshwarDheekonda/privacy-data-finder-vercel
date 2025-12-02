@@ -463,6 +463,14 @@ export const AuthDialog = () => {
                   'Update Password'
                 )}
               </Button>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isLoading}
+                className="w-full"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         ) : showOTPVerification ? (
@@ -516,16 +524,27 @@ export const AuthDialog = () => {
                   </Button>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowOTPVerification(false);
-                  setOtp('');
-                }}
-                className="w-full"
-              >
-                Back to Sign Up
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowOTPVerification(false);
+                    setOtp('');
+                  }}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  Back to Sign Up
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         ) : showPasswordResetOTP ? (
@@ -579,17 +598,28 @@ export const AuthDialog = () => {
                   </Button>
                 )}
               </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowPasswordResetOTP(false);
-                  setPasswordResetOtp('');
-                  setShowForgotPassword(true);
-                }}
-                className="w-full"
-              >
-                Back to Email Entry
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPasswordResetOTP(false);
+                    setPasswordResetOtp('');
+                    setShowForgotPassword(true);
+                  }}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  Back to Email Entry
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </div>
         ) : showForgotPassword ? (
@@ -611,30 +641,41 @@ export const AuthDialog = () => {
                   onChange={(e) => setForgotPasswordEmail(e.target.value)}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowForgotPassword(false)}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleForgotPassword}
+                    disabled={isLoading}
+                    className="flex-1"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Code
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
-                  onClick={() => setShowForgotPassword(false)}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={handleForgotPassword}
+                  onClick={handleClose}
                   disabled={isLoading}
-                  className="flex-1"
+                  className="w-full"
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Code
-                    </>
-                  )}
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -700,6 +741,15 @@ export const AuthDialog = () => {
                       ) : (
                         'Sign In'
                       )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClose}
+                      disabled={isLoading}
+                      className="w-full"
+                    >
+                      Cancel
                     </Button>
                   </form>
                 </Form>
@@ -795,6 +845,15 @@ export const AuthDialog = () => {
                       ) : (
                         'Create Account'
                       )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleClose}
+                      disabled={isLoading}
+                      className="w-full"
+                    >
+                      Cancel
                     </Button>
                   </form>
                 </Form>

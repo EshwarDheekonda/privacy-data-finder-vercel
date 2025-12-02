@@ -359,12 +359,32 @@ export class SearchApiError extends Error {
   }
 }
 
+// PII Attributes interface
+export interface PIIAttributes {
+  email?: string;
+  phone?: string;
+  dob?: string;
+  address?: string;
+  location?: string;
+  employer?: string;
+  education?: string;
+}
+
 // API Functions
 export const searchApi = {
   /**
    * Search for privacy risks associated with a name with retry logic
+   * @param searchName - Name to search for (required)
+   * @param piiAttributes - Optional PII attributes to refine search
+   * @param includeSocialMedia - Whether to include social media search (default: false)
+   * @param retryCount - Internal retry counter
    */
-  async searchByName(searchName: string, retryCount = 0): Promise<SearchResponse> {
+  async searchByName(
+    searchName: string, 
+    piiAttributes?: PIIAttributes,
+    includeSocialMedia: boolean = false,
+    retryCount = 0
+  ): Promise<SearchResponse> {
     if (!searchName.trim()) {
       throw new SearchApiError('Search name cannot be empty');
     }
@@ -372,8 +392,48 @@ export const searchApi = {
     try {
       const url = new URL('/search', API_BASE_URL);
       url.searchParams.append('searchName', searchName.trim());
+      
+      // Add includeSocial parameter (default to false for user consent)
+      url.searchParams.append('includeSocial', includeSocialMedia.toString());
+
+      // Build search parameters from PII attributes for better targeted search
+      const searchParameters: string[] = [];
+      if (piiAttributes) {
+        if (piiAttributes.email?.trim()) {
+          searchParameters.push(piiAttributes.email.trim());
+        }
+        if (piiAttributes.phone?.trim()) {
+          searchParameters.push(piiAttributes.phone.trim());
+        }
+        if (piiAttributes.dob?.trim()) {
+          searchParameters.push(piiAttributes.dob.trim());
+        }
+        if (piiAttributes.address?.trim()) {
+          searchParameters.push(piiAttributes.address.trim());
+        }
+        if (piiAttributes.location?.trim()) {
+          searchParameters.push(piiAttributes.location.trim());
+        }
+        if (piiAttributes.employer?.trim()) {
+          searchParameters.push(piiAttributes.employer.trim());
+        }
+        if (piiAttributes.education?.trim()) {
+          searchParameters.push(piiAttributes.education.trim());
+        }
+      }
+      
+      // Add parameters if any PII attributes provided
+      if (searchParameters.length > 0) {
+        url.searchParams.append('parameters', searchParameters.join(','));
+      }
 
       console.log('Starting API request to:', url.toString());
+      console.log('Search parameters:', {
+        searchName: searchName.trim(),
+        piiAttributes,
+        includeSocialMedia,
+        parameters: searchParameters
+      });
       
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -429,7 +489,7 @@ export const searchApi = {
         if (retryCount < 2) {
           // Retry up to 2 times for network errors
           await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1))); // Progressive delay
-          return searchApi.searchByName(searchName, retryCount + 1);
+          return searchApi.searchByName(searchName, piiAttributes, includeSocialMedia, retryCount + 1);
         }
         throw new SearchApiError(
           'Unable to connect to the privacy assessment service. Please check your internet connection and try again.',

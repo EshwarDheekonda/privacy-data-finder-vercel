@@ -64,25 +64,25 @@ export const Header: React.FC<HeaderProps> = ({ onGetStartedClick }) => {
         : 'bg-transparent'
     )}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-2 lg:gap-4">
           {/* Logo */}
-          <div className="flex items-center">
+          <div className={`flex items-center flex-shrink-0 z-10 ${user ? 'max-w-[200px] lg:max-w-none' : ''}`}>
             <Logo 
               variant="white" 
-              size="md" 
+              size={user ? "sm" : "md"}
               animated 
               showText 
               className="cursor-pointer"
             />
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation - Hide on smaller screens when user is signed in to prevent overlap */}
+          <nav className={`hidden items-center ${user ? 'lg:flex space-x-4 xl:space-x-6' : 'md:flex space-x-6 lg:space-x-8'} flex-1 justify-center min-w-0 max-w-xl mx-2 lg:mx-4`}>
             {navItems.map((item) => (
               <a
                 key={item.name}
                 href={item.href}
-                className="text-white/80 hover:text-white transition-colors duration-200 font-medium text-sm"
+                className="text-white/80 hover:text-white transition-colors duration-200 font-medium text-xs lg:text-sm whitespace-nowrap"
               >
                 {item.name}
               </a>
@@ -90,19 +90,21 @@ export const Header: React.FC<HeaderProps> = ({ onGetStartedClick }) => {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
             {user ? (
               <>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  className="text-white/80 hover:text-white hover:bg-white/10 p-2"
+                  title="Search"
+                  onClick={onGetStartedClick}
                 >
                   <Search className="h-4 w-4" />
                 </Button>
-                <div className="flex items-center gap-2 text-white/80 text-sm">
-                  <User className="h-4 w-4" />
-                  {user.email}
+                <div className="hidden lg:flex items-center gap-2 text-white/80 text-sm max-w-[200px] truncate">
+                  <User className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{user.email}</span>
                 </div>
                 <FeedbackDialog
                   trigger={
@@ -111,8 +113,8 @@ export const Header: React.FC<HeaderProps> = ({ onGetStartedClick }) => {
                       size="sm"
                       className="text-white/80 hover:text-white hover:bg-white/10"
                     >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Feedback
+                      <MessageSquare className="h-4 w-4 lg:mr-2" />
+                      <span className="hidden lg:inline">Feedback</span>
                     </Button>
                   }
                 />
@@ -122,8 +124,8 @@ export const Header: React.FC<HeaderProps> = ({ onGetStartedClick }) => {
                   onClick={handleSignOut}
                   className="border-white/20 text-white hover:bg-white/10 hover:border-white/40"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                  <LogOut className="h-4 w-4 lg:mr-2" />
+                  <span className="hidden lg:inline">Sign Out</span>
                 </Button>
               </>
             ) : (

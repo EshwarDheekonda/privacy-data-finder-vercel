@@ -58,9 +58,12 @@ const Index = () => {
         </div>
       )}
       
+      {/* Always render Header once at the top */}
+      <Header onGetStartedClick={handleGetStartedClick} />
+      
       {DEBUG_UI ? (
         /* Debug Mode Layout */
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background pt-20">
           <div className="container mx-auto px-4">
             <div className="py-8">
               <h1 className="text-4xl font-bold text-center text-foreground mb-4">
@@ -74,11 +77,6 @@ const Index = () => {
           
           {/* Try to render components with error boundaries */}
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-primary/20 p-4">
-              <p className="text-sm text-muted-foreground mb-2">Header Component:</p>
-              <Header onGetStartedClick={handleGetStartedClick} />
-            </div>
-            
             <div className="border-2 border-dashed border-primary/20 p-4">
               <p className="text-sm text-muted-foreground mb-2">Hero Section:</p>
               <HeroSection ref={heroRef} />
@@ -113,7 +111,6 @@ const Index = () => {
       ) : (
         /* Production Layout */
         <>
-          <Header onGetStartedClick={handleGetStartedClick} />
           <HeroSection ref={heroRef} />
           <TrustSection />
           <HowItWorksSection />

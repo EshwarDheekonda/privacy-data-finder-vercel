@@ -306,8 +306,21 @@ export default function Auth() {
           ) : (
             <>
               <CardHeader>
-                <CardTitle>Welcome</CardTitle>
-                <CardDescription>Sign in or create account</CardDescription>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle>Welcome</CardTitle>
+                    <CardDescription>Sign in or create account</CardDescription>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/')}
+                    className="ml-4"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab}>

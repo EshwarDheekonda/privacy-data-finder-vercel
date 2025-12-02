@@ -9,6 +9,7 @@ import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-privacy.jpg';
+import { AdvancedSearchOptions, PIIAttributes } from '@/components/AdvancedSearchOptions';
 
 export interface HeroSectionRef {
   focusSearchInput: () => void;
@@ -18,6 +19,8 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [piiAttributes, setPiiAttributes] = useState<PIIAttributes>({});
+  const [includeSocialMedia, setIncludeSocialMedia] = useState(false);
   const { count, incrementCounter } = useCounter();
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -73,7 +76,11 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
       setTimeout(() => setLoadingMessage('Compiling risk assessment...'), 60000);
       setTimeout(() => setLoadingMessage('Finalizing results...'), 120000);
 
-      const response: SearchResponse = await searchApi.searchByName(searchQuery);
+      const response: SearchResponse = await searchApi.searchByName(
+        searchQuery,
+        piiAttributes,
+        includeSocialMedia
+      );
       
       // Save search to database for counter tracking
       try {
@@ -137,13 +144,6 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
       {/* Main Content */}
       <div className="relative z-20 max-w-6xl mx-auto px-6 text-center">
         <div>
-          {/* Enhanced Badge */}
-          <div className="inline-flex items-center gap-2 depth-card px-6 py-3 mb-8 text-sm font-medium">
-            <Shield className="w-5 h-5 text-secondary" />
-            <span className="text-foreground">Enterprise-Grade Privacy Assessment</span>
-            <div className="w-2 h-2 bg-success rounded-full"></div>
-          </div>
-
           {/* Enhanced Headline */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
             <span className="gradient-text bg-gradient-to-r from-primary via-primary-light to-primary bg-clip-text text-transparent">
@@ -222,6 +222,14 @@ export const HeroSection = forwardRef<HeroSectionRef>((props, ref) => {
               Our AI scans public databases, social media, and data broker sites to reveal your digital privacy risks
             </div>
           </div>
+
+          {/* Advanced Search Options */}
+          <AdvancedSearchOptions
+            piiAttributes={piiAttributes}
+            onPIIAttributesChange={setPiiAttributes}
+            includeSocialMedia={includeSocialMedia}
+            onIncludeSocialMediaChange={setIncludeSocialMedia}
+          />
 
           {/* Separate Start Assessment Button */}
           <div className="max-w-lg mx-auto mb-12 relative z-30">
