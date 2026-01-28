@@ -42,19 +42,61 @@ export const AdvancedSearchOptions: React.FC<AdvancedSearchOptionsProps> = ({
   const hasAnyAttributes = Object.values(piiAttributes).some(val => val && val.trim() !== '');
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-6">
+    <div className="w-full max-w-3xl mx-auto mt-6 mb-6">
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full text-violet-200/80 hover:text-violet-100 hover:bg-white/5 transition-all duration-200"
+        className={`
+          w-full 
+          relative
+          group
+          overflow-hidden
+          border-violet-400/40 
+          bg-white/10 
+          backdrop-blur-sm
+          text-white
+          font-semibold
+          text-base
+          min-h-[48px]
+          py-3
+          px-4
+          sm:px-6
+          rounded-lg
+          transition-all 
+          duration-300 
+          ease-out
+          hover:border-violet-400/60
+          hover:bg-white/15
+          hover:bg-violet-500/10
+          hover:scale-[1.02]
+          hover:shadow-lg
+          hover:shadow-violet-500/20
+          active:scale-[0.98]
+          touch-manipulation
+          ${isExpanded ? 'border-violet-400/60 bg-white/15 shadow-lg shadow-violet-500/20' : ''}
+        `}
       >
-        <span className="flex items-center justify-center gap-2">
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          <span className="text-sm font-medium">
-            {isExpanded ? 'Hide' : 'Show'} Advanced Options
+        {/* Gradient border glow effect */}
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-violet-500/20 via-purple-500/20 to-violet-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm -z-10"></div>
+        
+        {/* Shimmer effect on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-out"></div>
+        
+        <span className="flex items-center justify-center gap-3 relative z-10">
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_rgba(196,181,253,0.6)]" style={{ filter: 'drop-shadow(0 0 4px rgba(196, 181, 253, 0.4))' }} />
+          ) : (
+            <ChevronDown className="h-5 w-5 transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_rgba(196,181,253,0.6)]" style={{ filter: 'drop-shadow(0 0 4px rgba(196, 181, 253, 0.4))' }} />
+          )}
+          <span className="flex items-center gap-2">
+            <span className="group-hover:text-violet-100 transition-colors duration-300">
+              {isExpanded ? 'Hide' : 'Show'} Advanced Options
+            </span>
             {hasAnyAttributes && !isExpanded && (
-              <span className="ml-2 text-xs text-violet-300/60">({Object.values(piiAttributes).filter(v => v).length} fields filled)</span>
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-violet-500/30 border border-violet-400/40 text-violet-100 text-xs font-semibold backdrop-blur-sm whitespace-nowrap">
+                {Object.values(piiAttributes).filter(v => v).length} filled
+              </span>
             )}
           </span>
         </span>

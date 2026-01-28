@@ -85,7 +85,7 @@ export const EnhancedRiskAssessment = ({ data }: EnhancedRiskAssessmentProps) =>
   return (
     <div className="space-y-6">
       {/* Risk Score Visualization */}
-      <Card className={`border-l-4 ${riskScore >= 10 ? 'border-l-red-500' : riskScore >= 6 ? 'border-l-orange-500' : 'border-l-green-500'}`}>
+      <Card className={`border-l-4 ${riskScore >= 12 ? 'border-l-red-500' : riskScore >= 8 ? 'border-l-orange-500' : riskScore >= 5 ? 'border-l-yellow-500' : 'border-l-green-500'}`}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />

@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { StarRating } from './StarRating';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const feedbackSchema = z.object({
-  overall_rating: z.number().min(1, 'Please select a rating').max(5),
+  overall_rating: z.string().min(1, 'Please provide an answer').max(300, 'Maximum 300 characters'),
   ease_of_use: z.enum(['Very Easy', 'Easy', 'Neutral', 'Difficult', 'Very Difficult'], {
     required_error: 'Please select how easy it was to use'
   }),
@@ -43,10 +42,11 @@ export const FeedbackForm = ({ onSuccess }: FeedbackFormProps) => {
   } = useForm<FeedbackFormData>({
     resolver: zodResolver(feedbackSchema),
     defaultValues: {
-      overall_rating: 0,
+      overall_rating: '',
     },
   });
 
+  const overallRatingValue = watch('overall_rating') || '';
   const improvementsValue = watch('improvements') || '';
   const featureRequestsValue = watch('feature_requests') || '';
 
@@ -59,7 +59,7 @@ export const FeedbackForm = ({ onSuccess }: FeedbackFormProps) => {
       const feedbackData = {
         user_id: user?.id || null,
         user_email: user?.email || null,
-        overall_rating: data.overall_rating,
+        overall_rating: data.overall_rating.trim(),
         ease_of_use: data.ease_of_use,
         expectations_met: data.expectations_met,
         improvements: data.improvements?.trim() || null,
@@ -94,14 +94,25 @@ export const FeedbackForm = ({ onSuccess }: FeedbackFormProps) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Question 1: Overall Rating */}
       <div className="space-y-3">
-        <Label className="text-base">
-          1. How would you rate your overall experience? <span className="text-destructive">*</span>
+        <Label htmlFor="overall_rating" className="text-base">
+          1. How often you feel to have something that actually helps to search our own digital data make sure it is safe? <span className="text-destructive">*</span>
         </Label>
-        <StarRating
-          value={watch('overall_rating')}
-          onChange={(value) => setValue('overall_rating', value)}
-          error={errors.overall_rating?.message}
+        <Textarea
+          id="overall_rating"
+          placeholder="Share your thoughts about digital data search tools and safety..."
+          {...register('overall_rating')}
+          className="min-h-[100px] resize-none"
+          maxLength={300}
         />
+        <div className="flex justify-between items-center">
+          <p className="text-xs text-muted-foreground">Required</p>
+          <p className="text-xs text-muted-foreground">
+            {overallRatingValue.length}/300
+          </p>
+        </div>
+        {errors.overall_rating && (
+          <p className="text-sm text-destructive">{errors.overall_rating.message}</p>
+        )}
       </div>
 
       <Separator />
@@ -134,7 +145,7 @@ export const FeedbackForm = ({ onSuccess }: FeedbackFormProps) => {
       {/* Question 3: Expectations Met */}
       <div className="space-y-3">
         <Label className="text-base">
-          3. Did the assessment results meet your expectations? <span className="text-destructive">*</span>
+          3. Did you find any useful results in this assessment? <span className="text-destructive">*</span>
         </Label>
         <RadioGroup
           onValueChange={(value) => setValue('expectations_met', value as any)}
